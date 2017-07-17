@@ -12,6 +12,10 @@ public interface Vertex {
 	public VertexList getSuccessors();
 	public VertexList getPredecessors();
 	
+	/**
+	 * Gets an identifier which must be unique within the graph.
+	 */
+	public int getId();
 	
 	/**
 	 * Gets the height of the node starting with 0 for the primary inputs. 
