@@ -2,6 +2,7 @@ package rs.blifflow;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import edu.princeton.cs.algs4.FlowEdge;
 import edu.princeton.cs.algs4.FlowNetwork;
@@ -20,6 +21,13 @@ public class GraphModel extends Model {
 
  public GraphModel(String name, BLIF parent) throws Exception {
   super(name, parent);
+ }
+ 
+ /**
+  * splitts all BinFunctions of this model into 2-input-LUTs
+  */
+ public void decompose () {
+  for (int i = this.functions.size()-1; i >= 0; i--) ((GraphFunction)this.functions.get(i)).decompose();
  }
  
  /**
@@ -160,7 +168,7 @@ public class GraphModel extends Model {
   // process all objects of current model, that can have other objects as input
   for (int i = 0; i < this.functions.size(); i++) {
    BinFunction o2 = this.functions.get(i);
-   for (int j = 0; j < o2.numInputs(); j++) this.addEdge(fn, h, this.getObjectByParamName(o2.names()[j]), o2);
+   for (int j = 0; j < o2.numInputs(); j++) this.addEdge(fn, h, o2.in().get(j), o2);
   }
   for (int i = 0; i < this.latches.size(); i++) {
    Latch o2 = this.latches.get(i);
@@ -217,26 +225,6 @@ public class GraphModel extends Model {
  }
  
  /**
-  * Returns the object, that corresponds to the name n in the current model. If n is the output of a sub-circuit,
-  * the SubCircuit.rel[i]-String is returned, that defines this output name.
-  * @param n
-  * the string name of an object
-  * @return
-  * the object
-  */
- private Object getObjectByParamName (String n) {
-  for (int i = 0; i < this.inputs.size(); i++) if (n.equals(this.inputs.get(i))) return this.inputs.get(i);
-  for (int i = 0; i < this.functions.size(); i++) if (n.equals(this.functions.get(i).name())) return this.functions.get(i);
-  for (int i = 0; i < this.latches.size(); i++) if (n.equals(this.latches.get(i).output)) return this.latches.get(i);
-  for (int i = 0; i < this.subCircuits.size(); i++) {
-   SubCircuit sc = this.subCircuits.get(i);
-   String s = sc.getRelByParam(n);
-   if (s != null) return s;
-  }
-  return null;
- }
- 
- /**
   * @param o
   * object of this model or of one of this model's sub-circuits
   * @return
@@ -288,7 +276,6 @@ public class GraphModel extends Model {
   public int n1;
   public int n2;
  }
- 
  
  
  

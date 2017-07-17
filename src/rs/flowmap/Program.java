@@ -4,8 +4,10 @@ import java.util.Iterator;
 
 import edu.princeton.cs.algs4.FlowEdge;
 import edu.princeton.cs.algs4.FlowNetwork;
+import edu.princeton.cs.algs4.FordFulkerson;
 import rs.blif.BLIF;
 import rs.blifflow.GraphModel;
+import rs.blifflow.GraphFunction;
 
 /**
  * 
@@ -17,13 +19,16 @@ public class Program {
  public static void main(String[] args) {
   // read data
   BLIF dat = new BLIF();
-  dat.ModelType = new GraphModel.GraphModelCreator();
+  dat.modelType = new GraphModel.GraphModelCreator();
+  dat.functionType = new GraphFunction.GraphFunctionCreator();
   if (args.length == 0) return;
   GraphModel rootModel = (GraphModel)dat.addFromFile(args[0]);
   // compute Network
   FlowNetwork fn = rootModel.computeFktNetwork();
   // print result
   printNetwork(fn, rootModel);
+  // FF
+  FordFulkerson ff = new FordFulkerson(fn, 4, 5);
  }
  
  private static void printNetwork(FlowNetwork fn, GraphModel m) {

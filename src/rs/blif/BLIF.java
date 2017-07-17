@@ -6,14 +6,17 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.logging.Logger;
 
 import rs.binfunction.BinFunction;
 import rs.binfunction.Cube;
+import rs.graphnode.GraphNode;
 
 /**
  * Describes one BLIF-Project, which can contain several models.
@@ -24,9 +27,9 @@ import rs.binfunction.Cube;
  */
 public class BLIF {
  HashMap<String, Model> models = new HashMap<String, Model>(); public HashMap<String, Model> models() { return models; }
- public boolean autoNameVariables = true;
  private static final Logger log = Logger.getLogger("espresso");
- public Model.ModelCreator ModelType = new Model.ModelCreator();
+ public Model.ModelCreator modelType = new Model.ModelCreator();
+ public BinFunction.FunctionCreator functionType = new BinFunction.FunctionCreator();
 
  /**
   * Adds all models from the given file to the BLIF-project.
@@ -39,9 +42,8 @@ public class BLIF {
   Model currentModel = null;
   Model firstModel = null;
   BinFunction[] currentFunctions = null;
-  int nextOutCnt = 1;
-  int nextInCnt = 0;
-  String[] nextNames = null;
+  int nextInCnt = -1;
+  int nextOutCnt = -1;
   try {
    File file = new File(fileName);
    BufferedReader f = new BufferedReader(new FileReader(file));
@@ -56,14 +58,24 @@ public class BLIF {
      break LINEREADER;
     }
     n++;
-    sp = s.split(" +");
+    while (s.length() > 0 && s.lastIndexOf("\\") == s.length()-1) {
+     String sn = f.readLine();
+     if (sn == null) { log.severe("Parsing stopped at line "+n+" of file "+file.getName()+": Line expected but end of file reached!"); break LINEREADER; }
+     n++;
+     s = s.substring(0, s.length()-1) + sn;
+    }
+    sp = s.split(" +"); // regex: split at whitespaces, don't split multiple whitespaces
     if (firstModel == null && currentModel != null) firstModel = currentModel;
     // interpret current line
     if (sp[0].length() == 0 || sp[0].charAt(0) == '#') continue LINEREADER; // no nothing on empty lines or comments
     if (currentModel == null && !sp[0].equals(".model")) {
      // implicit model begin using fileName
-     if (currentModel != null) currentModel.checkDeclarations();
-     currentModel = ModelType.newModel(file.getName(), this);
+     if (currentModel != null) {
+      byte b = currentModel.correctLinkeage();
+      if ((b & 1) != 0) log.warning("Model "+currentModel.name()+" of file "+file.getName()+" incorrect: There exists undeclared inputs!");
+      if ((b & 2) != 0) log.warning("Model "+currentModel.name()+" of file "+file.getName()+": There exists unused outputs!");
+     }
+     currentModel = modelType.newModel(file.getName(), this);
      if (currentModel == null) { log.severe("Parsing stopped at line "+n+" of file "+file.getName()+": Unknown Error!"); break LINEREADER; }
     }
     if (sp[0].charAt(0) == '.') {
@@ -72,33 +84,36 @@ public class BLIF {
      switch (sp[0]) {
       case ".model" :
        if (sp.length < 2) { log.severe("Parsing stopped at line "+n+" of file "+file.getName()+": Name of model not specified!"); break LINEREADER; }
-       currentModel = ModelType.newModel(sp[1], this);
+       currentModel = modelType.newModel(sp[1], this);
        if (currentModel == null) { log.severe("Parsing stopped at line "+n+" of file "+file.getName()+": Unknown Error!"); break LINEREADER; }
        break;
       case ".inputs" :
        currentModel.inputsAndOutputsDeclared = true;
-       for (int i = 1; i < sp.length; i++) currentModel.inputs.add(sp[i]);
+       for (int i = 1; i < sp.length; i++) currentModel.inputs.add(new GraphNode.InputNode(sp[i]));
        break;
       case ".outputs" :
        currentModel.inputsAndOutputsDeclared = true;
-       for (int i = 1; i < sp.length; i++) currentModel.outputs.add(sp[i]);
+       for (int i = 1; i < sp.length; i++) currentModel.outputs.add(new GraphNode.OutputNode(new GraphNode.UnknownNode(sp[i])));
        break;
       case ".i" :
        if (sp.length < 2) { log.severe("Parsing stopped at line "+n+" of file "+file.getName()+": No paramater given for .i"); break LINEREADER; }
        try { nextInCnt = Integer.parseInt(sp[1]); } catch (NumberFormatException e) { log.severe("Parsing stopped at line "+n+" of file "+file.getName()+": Invalid integer!"); break LINEREADER; }
        if (nextInCnt < 0) { log.severe("Parsing stopped at line "+n+" of file "+file.getName()+": .i must be >= 0!"); break LINEREADER; }
+       if (nextInCnt >= 0 && nextOutCnt > 0) currentFunctions = createFunctionsAutoNamed(currentModel, nextInCnt, nextOutCnt);
        break;
       case ".o" :
        if (sp.length < 2) { log.severe("Parsing stopped at line "+n+" of file "+file.getName()+": No paramater given for .o"); break LINEREADER; }
        try { nextOutCnt = Integer.parseInt(sp[1]); } catch (NumberFormatException e) { log.severe("Parsing stopped at line "+n+" of file "+file.getName()+": Invalid integer!"); break LINEREADER; }
        if (nextOutCnt <= 0) { log.severe("Parsing stopped at line "+n+" of file "+file.getName()+": .o must be > 0!"); break LINEREADER; }
+       if (nextInCnt >= 0 && nextOutCnt > 0) currentFunctions = createFunctionsAutoNamed(currentModel, nextInCnt, nextOutCnt);
        break;
       case ".names" :
-       nextInCnt = sp.length - 2;
-       nextOutCnt = 1;
-       nextNames = new String[nextInCnt+nextOutCnt];
-       for (int i = 0; i < nextInCnt; i++) nextNames[i] = sp[i+1];
-       nextNames[nextInCnt] = sp[nextInCnt+1];
+       if (sp.length < 2) { log.severe("Parsing stopped at line "+n+" of file "+file.getName()+": No output name given for function."); break LINEREADER; }
+       List<GraphNode> in = new ArrayList<GraphNode>(sp.length - 2);
+       for (int i = 0; i < sp.length - 2; i++) in.add(new GraphNode.UnknownNode(sp[i+1]));
+       currentFunctions = new BinFunction[1];
+       currentFunctions[0] = functionType.newFunction(in, sp[sp.length-1]);
+       currentModel.functions.add(currentFunctions[0]);
        break;
       case ".subckt" :
        if (sp.length < 2) { log.severe("Line "+n+" of file "+file.getName()+" ignored: Subcircuit file name not specified!"); continue LINEREADER; }
@@ -115,7 +130,7 @@ public class BLIF {
       case ".latch" :
        if (sp.length < 3) { log.severe("Line "+n+" of file "+file.getName()+" ignored: Input and output variable of latch not specified!"); continue LINEREADER; }
        Latch l = new Latch();
-       l.input = sp[1];
+       l.input(new GraphNode.UnknownNode(sp[1]));
        l.output = sp[2];
        if (sp.length > 4) {
         l.type = sp[3];
@@ -126,7 +141,11 @@ public class BLIF {
        currentModel.latches.add(l);
        break;
       case ".end" :
-       if (currentModel != null) currentModel.checkDeclarations();
+       if (currentModel != null) {
+        byte b = currentModel.correctLinkeage();
+        if ((b & 1) != 0) log.warning("Model "+currentModel.name()+" of file "+file.getName()+" incorrect: There exists undeclared inputs!");
+        if ((b & 2) != 0) log.warning("Model "+currentModel.name()+" of file "+file.getName()+": There exists unused outputs!");
+       }
        currentModel = null;
        break;
       default :
@@ -135,29 +154,8 @@ public class BLIF {
      }
     } else {
      // BLIF data line
+     if (currentFunctions == null) { log.severe("Parsing stopped at line "+n+" of file "+file.getName()+": No function definition was made before this data line!"); break LINEREADER; }
      if (sp.length < 2) { log.severe("Parsing stopped at line "+n+" of file "+file.getName()+": No output specified!"); break LINEREADER; }
-     if (currentModel == null) { log.warning("Line "+n+" ignored of file "+file.getName()+": Not inside a model"); continue LINEREADER; }
-     if (currentFunctions == null) { // init the functions currently read
-      currentFunctions = new BinFunction[nextOutCnt];
-      for (int i = 0; i < nextOutCnt; i++) {
-       currentFunctions[i] = new BinFunction(nextInCnt);
-       if (nextNames != null) { // copy stored variable names to the new functions
-        for (int j = 0; j < nextInCnt; j++) if (j < nextNames.length) currentFunctions[i].names()[j] = nextNames[j];
-        if (i + nextInCnt < nextNames.length) currentFunctions[i].names()[nextInCnt] = nextNames[i + nextInCnt];
-       } else if (autoNameVariables) { // automatically name unspecified variables (i.e. in pla-descriptions)
-        for (int j = 0; j < nextInCnt; j++) currentFunctions[i].names()[j] = "x"+j;
-        currentFunctions[i].names()[nextInCnt] = "z"+i;
-        if (currentModel.inputs.size() == 0) {
-         for (int j = 0; j < nextInCnt; j++) currentModel.inputs.add(currentFunctions[i].names()[j]);
-        }
-        currentModel.outputs.add(currentFunctions[i].names()[nextInCnt]);
-       }
-       currentModel.functions.add(currentFunctions[i]);
-      }
-      nextOutCnt = 1;
-      nextInCnt = 0;
-      nextNames = null;
-     }
      if (sp[1].length() != currentFunctions.length) { log.severe("Parsing stopped at line "+n+" of file "+file.getName()+": Number of output variables noes not fit the declared number!"); break LINEREADER; }
      for (int i = 0; i < currentFunctions.length; i++) switch (sp[1].charAt(i)) { // create separate function for each output variable
       case '0' :
@@ -184,9 +182,27 @@ public class BLIF {
   } catch (IOException e) {
    log.severe("Error while reading file "+fileName+"!");
   }
-  if (currentModel != null) currentModel.checkDeclarations();
+  if (currentModel != null) {
+   byte b = currentModel.correctLinkeage();
+   if ((b & 1) != 0) log.warning("Model "+currentModel.name()+" incorrect: There exists undeclared inputs!");
+   if ((b & 2) != 0) log.warning("Model "+currentModel.name()+": There exists unused outputs!");
+  }
   if (firstModel != null) firstModel.isSeparateFile = true;
   return firstModel;
+ }
+ private BinFunction[] createFunctionsAutoNamed(Model model, int inCnt, int outCnt) {
+  BinFunction[] r = new BinFunction[outCnt];
+  List<GraphNode> in = new ArrayList<GraphNode>(inCnt);
+  for (int i = 0; i < inCnt; i++) {
+   model.inputs.add(new GraphNode.InputNode("x" + i));
+   in.add(new GraphNode.UnknownNode("x" + i));
+  }
+  for (int i = 0; i < outCnt; i++) {
+   model.outputs.add(new GraphNode.OutputNode(new GraphNode.UnknownNode("z" + i)));
+   r[i] = functionType.newFunction(in, "z" + i);
+   model.functions.add(r[i]);
+  }
+  return r;
  }
  
  public void saveToFolder(String path) {

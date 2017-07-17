@@ -3,9 +3,12 @@ package rs.blif;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import rs.binfunction.BinFunction;
+import rs.graphnode.GraphNode;
 
 /**
  * The class Model represents one BLIF-Model. Only data-fields necessary for Espresso are implemented yet.
@@ -17,8 +20,8 @@ public class Model {
  public final List<BinFunction> functions = new ArrayList<BinFunction>();
  public final List<Latch> latches = new ArrayList<Latch>();
  public final List<SubCircuit> subCircuits = new ArrayList<SubCircuit>();
- public final List<String> inputs = new ArrayList<String>();
- public final List<String> outputs = new ArrayList<String>();
+ public final List<GraphNode.InputNode> inputs = new ArrayList<GraphNode.InputNode>();
+ public final List<GraphNode.OutputNode> outputs = new ArrayList<GraphNode.OutputNode>();
  protected Boolean inputsAndOutputsDeclared = false;
  public boolean isSeparateFile = false;
  boolean saved = false;
@@ -30,36 +33,59 @@ public class Model {
   parent.models.put(name, this);
  }
  
- /**
-  * BLIF allows to specify the model's input and output parameters implicitly. This function turns implicitly given
-  * input and output declarations into an explicit declaration.
-  */
- public void checkDeclarations () {
-  if (inputsAndOutputsDeclared) return;
-  List<BinFunction> unusedOutputs = new ArrayList<BinFunction>();
-  unusedOutputs.addAll(functions);
-  for (int i = 0; i < this.functions.size(); i++) {
-   BinFunction fi = this.functions.get(i);
-   InpIt: for (int j = 0; j < fi.numInputs(); j++) {
-    String s = fi.names()[j];
-    for (int k = 0; k < this.functions.size(); k++) {
-     BinFunction fk = this.functions.get(k);
-     if (!s.equals(fk.name())) continue;
-     // functions[i].inputs[j] is an existing function. Remove this function from unused inputs.
-     int u = unusedOutputs.indexOf(fk);
-     if (u >= 0) unusedOutputs.set(u, null);
-     continue InpIt;
+ public byte correctLinkeage () {
+  byte b = 0;
+  // search nodes with un-linked inputs (input = UnknownNode)
+  Iterator<GraphNode> it = this.iterateGraphNodes();
+  while (it.hasNext()) {
+   GraphNode cn = it.next();
+   if (cn instanceof GraphNode.InputNode) continue; // inputs and from-subCircuit links should have no inputs 
+   List<GraphNode> l = cn.in();
+   for (int i = 0; i < l.size(); i++) {
+    GraphNode n = l.get(i);
+    if (n instanceof GraphNode.UnknownNode) { // this node is not linked and has to be replaced!
+     GraphNode n_ = this.getNodeByName(n.name());
+     if (n_ == null) {
+      if (!inputsAndOutputsDeclared) {
+       n_ = new GraphNode.InputNode(n.name());
+       this.inputs.add((GraphNode.InputNode)n_);
+       l.set(i, n_); // correct predecessor node was created and added to model's input nodes
+      } else b |= 1;
+     } else l.set(i, n_); // correct predecessor node found; replace l[i]
     }
-    // functions[i].inputs[j] is not an existing function. Add this input to the model's inputs.
-    this.inputs.add(s);
    }
   }
-  // set the remaining unusedOutputs as the model's outputs
-  for (int i = 0; i < unusedOutputs.size(); i++) if (unusedOutputs.get(i) != null) {
-   this.outputs.add(unusedOutputs.get(i).name());
+  // search nodes without outputs
+  it = this.iterateGraphNodes();
+  while (it.hasNext()) {
+   GraphNode cn = it.next();
+   if (cn instanceof GraphNode.OutputNode) continue; // outputs and to-subCircuit links should have no outputs 
+   Set<GraphNode> s = cn.out();
+   if (s.size() == 0) {
+    if (!inputsAndOutputsDeclared) {
+     GraphNode.OutputNode n_ = new GraphNode.OutputNode(cn);
+     this.outputs.add(n_);
+    } else b |= 2;
+   }
   }
-  // mark inputs and outputs to be declared
   inputsAndOutputsDeclared = true;
+  return b;
+ }
+ 
+ public Iterator<GraphNode> iterateGraphNodes () {
+  return new NodeIterator(this);
+ }
+ 
+ public GraphNode getNodeByName (String name) {
+  for (int i = 0; i < this.inputs.size(); i++) if (this.inputs.get(i).name().equals(name)) return this.inputs.get(i);
+  for (int i = 0; i < this.functions.size(); i++) if (this.functions.get(i).name().equals(name)) return this.functions.get(i);
+  for (int i = 0; i < this.latches.size(); i++) if (this.latches.get(i).name().equals(name)) return this.latches.get(i);
+  for (int i = 0; i < this.subCircuits.size(); i++) {
+   SubCircuit sc = this.subCircuits.get(i);
+   for (int j = 0; j < sc.out.size(); j++) if (sc.out.get(j).name().equals(name)) return sc.out.get(j);
+  }
+  // don't regard outputs here because they have the same name like their predecessors.
+  return null;
  }
 
  public void appendToFile(FileWriter fileWriter, boolean firstModel) throws IOException {
@@ -78,17 +104,12 @@ public class Model {
   // write functions
   for (int i = 0; i < functions.size(); i++) {
    BinFunction f = functions.get(i);
-   if (f.numInputs() == 0) continue;
-   if (f.names()[0] == null) {
-    fileWriter.write(".i "+f.numInputs()+"\n");
-    fileWriter.write(".o 1\n");
-   } else {
-    String s = "\n.names";
-    for (int j = 0; j < f.names().length; j++) s += " "+f.names()[j];
-    fileWriter.write(s+"\n");
-   }
+   String s = "\n.names";
+   for (int j = 0; j < f.numInputs(); j++) s += " "+f.in().get(j).name();
+   s += " "+f.name();
+   fileWriter.write(s+"\n");
    for (int j = 0; j < f.on().size(); j++) {
-    String s = "";
+    s = "";
     for (int k = 0; k < f.numInputs(); k++) switch (f.on().get(j).getVar(k)) {
      case BinFunction.INV :
       s += "!";
@@ -108,6 +129,63 @@ public class Model {
   }
   // write closing of model
   if (!firstModel) fileWriter.write(".end\n");
+ }
+ 
+ 
+ 
+ private static class NodeIterator implements Iterator<GraphNode> {
+  private final Model model;
+  private List<?> currentList;
+  private int currentPos = -1;
+  private int currentItem = -1;
+  private GraphNode next = null;
+  public NodeIterator (Model model) {
+   this.model = model;
+   currentList = model.inputs;
+   internalNext();
+  }
+  private void internalNext () {
+   next = null;
+   if (currentList == model.inputs) {
+    currentPos++;
+    if (currentPos < currentList.size()) { next = ((GraphNode.InputNode)currentList.get(currentPos)); return; }
+    else { currentList = model.functions; currentPos = -1; }
+   }
+   if (currentList == model.functions) {
+    currentPos++;
+    if (currentPos < currentList.size()) { next = ((BinFunction)currentList.get(currentPos)); return; }
+    else { currentList = model.latches; currentPos = -1; }
+   }
+   if (currentList == model.latches) {
+    currentPos++;
+    if (currentPos < currentList.size()) { next = ((Latch)currentList.get(currentPos)); return; }
+    else { currentList = model.subCircuits; currentPos = 0; }
+   }
+   if (currentList == model.subCircuits) {
+    if (currentPos < currentList.size()) {
+     currentItem++;
+     if (currentItem >= ((SubCircuit)currentList.get(currentPos)).in.size()) { currentPos++; currentItem = -1; internalNext(); return; }
+     next = ((SubCircuit)currentList.get(currentPos)).in.get(currentItem);
+    } else { currentList = model.outputs; currentPos = -1; }
+   }
+   if (currentList == model.outputs) {
+    currentPos++;
+    if (currentPos < currentList.size()) { next = ((GraphNode.OutputNode)currentList.get(currentPos)); return; }
+    else { next = null; }
+   }
+  }
+  @Override public boolean hasNext() { return this.next != null; }
+  @Override public GraphNode next () {
+   GraphNode r = this.next;
+   this.internalNext();
+   return r;
+  }
+ }
+ 
+ 
+ 
+ protected static class FktListCreator {
+  protected List<BinFunction> newList () { return new ArrayList<BinFunction>(); }
  }
  
  

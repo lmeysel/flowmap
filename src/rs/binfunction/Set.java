@@ -2,6 +2,9 @@ package rs.binfunction;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.List;
+
+import rs.graphnode.GraphNode;
 
 /**
  * The class Set represents one set of several cubes.
@@ -87,8 +90,8 @@ public class Set extends ArrayList<Cube> {
  
  @Override
  public String toString () { return toString(null, null, 0, this.size()); }
- public String toString (String[] names) { return toString(names, null, 0, this.size()); }
- public String toString (String[] names, Cube ignore, int from, int to) {
+ public String toString (List<GraphNode> names) { return toString(names, null, 0, this.size()); }
+ public String toString (List<GraphNode> names, Cube ignore, int from, int to) {
   String s = "";
   boolean inv = false;
   boolean one = false;
@@ -98,7 +101,7 @@ public class Set extends ArrayList<Cube> {
    if (!s.equals("")) s += " + ";
    int dcCnt = 0;
    for (int j = 0; j < this.width; j++) {
-    if (names != null && names[j] != null) v = names[j];
+    if (names != null && names.get(j) != null) v = names.get(j).name();
     else v = ""+j;
     switch (((Cube)this.get(i)).getVar(j)) {
      case BinFunction.INV :
@@ -121,7 +124,6 @@ public class Set extends ArrayList<Cube> {
   if (inv) s = "INVALID  ("+s+")";
   else if (one) s = "ONE  ("+s+")";
   else if (s.length() == 0) s = "ZERO";
-  if (names != null && names[this.width] != null) s = names[this.width] + " = " + s;
   return s;
  }
  

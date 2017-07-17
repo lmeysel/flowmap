@@ -1,15 +1,25 @@
 package rs.binfunction;
 
+import java.util.HashSet;
+import java.util.List;
+
+import rs.graphnode.GraphNode;
+
 /**
  * BinFunction describes a logic function, that has an onset and a don't-care set.
  * @author Mitja Stachowiak, Ludwig Meysel
  */
-public class BinFunction {
- private final Set on;    public Set on () { return this.on; }
- private final Set dc;    public Set dc () { return this.dc; }
+public class BinFunction implements GraphNode {
+ protected Set on;    public Set on () { return this.on; }
+ protected Set dc;    public Set dc () { return this.dc; }
  public int numInputs () { return this.on.width(); }
- private String[] names;    public String[] names () { return this.names; }
- public String name () { return this.names[this.names.length-1]; }
+ private final SelfLinkingList in;
+ private final java.util.Set<GraphNode> out = new HashSet<GraphNode>();
+ private String name = null;
+ // implementation of GraphNode
+ @Override public String name () { return this.name; }
+ @Override public List<GraphNode> in () { return this.in; }
+ @Override public java.util.Set<GraphNode> out() { return this.out; } // to be overridden
  // definition of two-bit representations
  public final static int INV = 0;
  public final static int ONE = 2;
@@ -21,12 +31,15 @@ public class BinFunction {
  public BinFunction (int numInputs) {
   this.on = new Set(numInputs);
   this.dc = new Set(numInputs);
-  this.names = new String[numInputs+1]; 
+  this.in = new SelfLinkingList(this, numInputs);
+  for (int i = 0; i < numInputs; i++) this.in.add(null);
  }
- public BinFunction (int numInputs, String[] names) {
-  this(numInputs);
-  this.names = names; 
+ public BinFunction (List<GraphNode> in, String name) {
+  this(in.size());
+  for (int i = 0; i < in.size(); i++) this.in.set(i, in.get(i));
+  this.name = name;
  }
+
  
  /**
   * Computes the off-set of this function by applying the Presto-Algorithm on the function.
@@ -137,22 +150,61 @@ public class BinFunction {
  public String toString () {
   String r = "";
   if (on.intersects(dc)) r += "[on and dc intersect!]";
-  r += on.toString(this.names);
-  if (dc.size() > 0) r += "     DC_"+dc.toString(this.names);
+  r += this.name() + " = ";
+  r += on.toString(this.in);
+  if (dc.size() > 0) r += "     DC_"+dc.toString(this.in);
   return r;
  }
  
- public String isEquivalent(BinFunction foreign) {
-  if (this.numInputs() != foreign.numInputs()) return "no (different number of inputs)";
-  boolean namesMatch = true;
-  for (int i = 0; i < this.names.length; i++) if ((this.names[i] == null) != (foreign.names[i] == null) || (this.names[i] != null) && !this.names[i].equals(foreign.names[i])) { namesMatch = false; break;}
-  Set fOnDc = new Set(foreign.on().width());
-  fOnDc.addAll(foreign.on);
-  fOnDc.addAll(foreign.dc);
-  for (int i = 0; i < this.on.size(); i++) if (!fOnDc.covers(this.on.get(i))) return "no (the "+i+"-th cube of tested function is not covered by the input function)";
-  for (int i = 0; i < foreign.on.size(); i++) if (!this.on.covers(foreign.on.get(i))) return "no (the "+i+"-th cube of input function is not covered by the tested function)";
-  if (namesMatch) return "yes";
-  return "yes (names do not match)";
+ public boolean isEquivalent(BinFunction foreign) {
+  if (this.numInputs() != foreign.numInputs()) return false;
+  // map input names
+  int[] map = new int[this.numInputs()];
+  boolean eqMap = true;
+  for (int i = 0; i < this.numInputs(); i++) {
+   if (this.in.get(i) == null) return false;
+   map[i] = -1;
+   for (int j = 0; j < foreign.numInputs(); j++) {
+    if (foreign.in.get(j) == null) return false;
+    if (this.in.get(i).name().equals(foreign.in.get(j).name())) {
+     map[i] = j;
+     if (i != j) eqMap = false;
+    }
+   }
+   if (map[i] == -1) return false;
+  }
+  // check weather each cube of this.on is covered by foreign.on+dc
+  for (int i = 0; i < this.on.size(); i++) {
+   Cube c = this.on().get(i);
+   Cube m;
+   if (eqMap) m = c;
+   else {
+    m = new Cube(this.numInputs());
+    for (int j = 0; j < this.numInputs(); j++) m.setVar(map[j], c.getVar(j));
+   }
+   if (!foreign.on().covers(m, null, new Set.ForeignCoverer() {
+    @Override public boolean isCovered (Cube c) {
+     return foreign.dc().covers(c); // check, if the dc-set covers c
+    }
+   })) return false;
+  }
+  // check weather each cube of foreign.on is covered by this.on+dc
+  BinFunction _this = this;
+  for (int i = 0; i < foreign.on.size(); i++) {
+   Cube c = foreign.on().get(i);
+   Cube m;
+   if (eqMap) m = c;
+   else {
+    m = new Cube(this.numInputs());
+    for (int j = 0; j < this.numInputs(); j++) m.setVar(j, c.getVar(map[j]));
+   }
+   if (!_this.on().covers(m, null, new Set.ForeignCoverer() {
+    @Override public boolean isCovered (Cube c) {
+     return _this.dc().covers(c); // check, if the dc-set covers c
+    }
+   })) return false;
+  }
+  return true;
  }
  
  public int cost() {
@@ -160,5 +212,16 @@ public class BinFunction {
   for (int i = 0; i < on.size(); i++) r += on.width() - on.get(i).cardinality2();
   return r;
  }
-
+ 
+ 
+ 
+ 
+ public static class FunctionCreator {
+  public BinFunction newFunction (int numInputs) {
+   return new BinFunction(numInputs);
+  }
+  public BinFunction newFunction (List<GraphNode> in, String name) {
+   return new BinFunction(in, name);
+  }
+ }
 }
