@@ -15,7 +15,7 @@ import rs.blif.*;
  * @author Mitja Stachowiak
  *
  */
-
+@Deprecated
 public class GraphModel extends Model {
  private int networkVerticesCount;
 
