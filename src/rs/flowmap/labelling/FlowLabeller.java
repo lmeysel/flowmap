@@ -1,6 +1,6 @@
 package rs.flowmap.labelling;
 
-import rs.flowmap.graph.base.Graph;
+import rs.flowmap.graph.Graph;
 
 /**
  * Provides functionality to label a graph using maximum flow and looking for k-feasable cuts. This

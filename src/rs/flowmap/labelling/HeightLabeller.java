@@ -3,9 +3,9 @@ package rs.flowmap.labelling;
 import java.util.HashSet;
 import java.util.stream.Collectors;
 
-import rs.flowmap.graph.base.Graph;
-import rs.flowmap.graph.base.Vertex;
-import rs.flowmap.graph.base.VertexList;
+import rs.flowmap.graph.Graph;
+import rs.flowmap.graph.Vertex;
+import rs.flowmap.graph.VertexList;
 
 /**
  * Helper class for labelling the height in a graph.
@@ -30,7 +30,7 @@ public class HeightLabeller {
 			});
 			stage = javaSucks;
 		}
-		
+
 		// does it make sense, not sure... :)
 		v.sort((Vertex v1, Vertex v2) -> v1.getHeight() - v2.getHeight());
 	}

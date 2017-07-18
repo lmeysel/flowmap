@@ -1,4 +1,4 @@
-package rs.flowmap.graph.base;
+package rs.flowmap.graph;
 
 import java.util.Collection;
 import java.util.Vector;
