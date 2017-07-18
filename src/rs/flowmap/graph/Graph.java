@@ -4,16 +4,13 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 
-import rs.flowmap.graph.base.EdgeList;
-import rs.flowmap.graph.base.VertexList;
-
 /**
  * 
  * @author Ludwig Meysel
  * 
  * @version 16.07.2017
  */
-public class Graph implements rs.flowmap.graph.base.Graph {
+public class Graph {
 	protected EdgeList edges;
 	protected VertexList vertices;
 
@@ -28,7 +25,6 @@ public class Graph implements rs.flowmap.graph.base.Graph {
 	/**
 	 * {@inheritDoc}
 	 */
-	@Override
 	public EdgeList getEdges() {
 		return edges;
 	}
@@ -36,7 +32,6 @@ public class Graph implements rs.flowmap.graph.base.Graph {
 	/**
 	 * {@inheritDoc}
 	 */
-	@Override
 	public VertexList getVertices() {
 		return vertices;
 	}
@@ -52,14 +47,12 @@ public class Graph implements rs.flowmap.graph.base.Graph {
 			wtr.write("digraph G {" + br);
 
 			// define vertices
-			for (rs.flowmap.graph.base.Vertex vertex : vertices) {
-				Vertex v = (Vertex)vertex;
+			for (Vertex v : vertices) {
 				wtr.write("n" + v.getId() + " [label=<" + v.getHeight() + ">]" + br);
 			}
 
 			// define edges
-			for (rs.flowmap.graph.base.Edge edge : edges) {
-				Edge e = (Edge)edge;
+			for (Edge e : edges) {
 				wtr.write("n" + e.getSource().getId() + " -> n" + e.getTarget().getId() + br);
 			}
 

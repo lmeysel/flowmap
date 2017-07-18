@@ -1,15 +1,12 @@
 package rs.flowmap.graph;
 
-import rs.flowmap.graph.base.EdgeList;
-import rs.flowmap.graph.base.VertexList;
-
 /**
  * 
  * @author Ludwig Meysel
  * 
  * @version 16.07.2017
  */
-public class Vertex implements rs.flowmap.graph.base.Vertex {
+public class Vertex {
 	private static int idCnt = 0;
 
 	protected EdgeList inbound, outbound;
@@ -31,7 +28,6 @@ public class Vertex implements rs.flowmap.graph.base.Vertex {
 	/**
 	 * {@inheritDoc}
 	 */
-	@Override
 	public EdgeList getOutbounds() {
 		return this.outbound;
 	}
@@ -51,7 +47,6 @@ public class Vertex implements rs.flowmap.graph.base.Vertex {
 	/**
 	 * {@inheritDoc}
 	 */
-	@Override
 	public EdgeList getInbounds() {
 		return this.inbound;
 	}
@@ -71,7 +66,6 @@ public class Vertex implements rs.flowmap.graph.base.Vertex {
 	/**
 	 * {@inheritDoc}
 	 */
-	@Override
 	public VertexList getSuccessors() {
 		return this.successors;
 	}
@@ -79,7 +73,6 @@ public class Vertex implements rs.flowmap.graph.base.Vertex {
 	/**
 	 * {@inheritDoc}
 	 */
-	@Override
 	public VertexList getPredecessors() {
 		return this.predecessors;
 	}
@@ -87,7 +80,6 @@ public class Vertex implements rs.flowmap.graph.base.Vertex {
 	/**
 	 * {@inheritDoc}
 	 */
-	@Override
 	public int getId() {
 		return this.id;
 	}
@@ -95,7 +87,6 @@ public class Vertex implements rs.flowmap.graph.base.Vertex {
 	/**
 	 * {@inheritDoc}
 	 */
-	@Override
 	public int getHeight() {
 		return height;
 	}
@@ -103,7 +94,6 @@ public class Vertex implements rs.flowmap.graph.base.Vertex {
 	/**
 	 * {@inheritDoc}
 	 */
-	@Override
 	public void setHeight(int height) {
 		this.height = height;
 	}
@@ -111,7 +101,6 @@ public class Vertex implements rs.flowmap.graph.base.Vertex {
 	/**
 	 * {@inheritDoc}
 	 */
-	@Override
 	public int getLabel() {
 		return label;
 	}
@@ -119,7 +108,6 @@ public class Vertex implements rs.flowmap.graph.base.Vertex {
 	/**
 	 * {@inheritDoc}
 	 */
-	@Override
 	public void setLabel(int label) {
 		this.label = label;
 	}

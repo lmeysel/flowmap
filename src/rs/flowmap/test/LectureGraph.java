@@ -1,10 +1,10 @@
 package rs.flowmap.test;
 
 import rs.flowmap.graph.Edge;
+import rs.flowmap.graph.EdgeList;
 import rs.flowmap.graph.Graph;
 import rs.flowmap.graph.Vertex;
-import rs.flowmap.graph.base.EdgeList;
-import rs.flowmap.graph.base.VertexList;
+import rs.flowmap.graph.VertexList;
 import rs.flowmap.labelling.HeightLabeller;
 
 /**

@@ -6,7 +6,7 @@ package rs.flowmap.graph;
  * 
  * @version 16.07.2017
  */
-public class Edge implements rs.flowmap.graph.base.Edge {
+public class Edge {
 	protected Vertex source, target;
 	protected int weight = 100; // initial value large enaugh for k << 100
 
@@ -14,9 +14,9 @@ public class Edge implements rs.flowmap.graph.base.Edge {
 	 * Creates a new object from the {@see Edge} class. <b>Source and target vertices are notified
 	 * automatically about this edge!</b>
 	 */
-	public Edge(rs.flowmap.graph.base.Vertex source, rs.flowmap.graph.base.Vertex target) {
-		this.source = (Vertex)source;
-		this.target = (Vertex)target;
+	public Edge(Vertex source, Vertex target) {
+		this.source = source;
+		this.target = target;
 
 		this.source.addOutbound(this);
 		this.target.addInbound(this);
@@ -25,7 +25,6 @@ public class Edge implements rs.flowmap.graph.base.Edge {
 	/**
 	 * {@inheritDoc}
 	 */
-	@Override
 	public Vertex getSource() {
 		return source;
 	}
@@ -33,7 +32,6 @@ public class Edge implements rs.flowmap.graph.base.Edge {
 	/**
 	 * {@inheritDoc}
 	 */
-	@Override
 	public Vertex getTarget() {
 		return target;
 	}
@@ -41,7 +39,6 @@ public class Edge implements rs.flowmap.graph.base.Edge {
 	/**
 	 * {@inheritDoc}
 	 */
-	@Override
 	public int getWeight() {
 		return weight;
 	}
@@ -49,7 +46,6 @@ public class Edge implements rs.flowmap.graph.base.Edge {
 	/**
 	 * {@inheritDoc}
 	 */
-	@Override
 	public void setWeight(int weight) {
 		this.weight = weight;
 

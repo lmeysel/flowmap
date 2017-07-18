@@ -1,10 +1,11 @@
-package rs.flowmap.graph.base;
+package rs.flowmap.graph;
 
 import java.util.Collection;
 import java.util.Vector;
 
 /**
  * Syntactic sougar...
+ * 
  * @author Ludwig Meysel
  * 
  * @version 16.07.2017
@@ -24,6 +25,7 @@ public class EdgeList extends Vector<Edge> {
 
 	/**
 	 * Creates a new object from the {@see EdgeList} class.
+	 * 
 	 * @param initialCapacity
 	 */
 	public EdgeList(int initialCapacity) {
@@ -32,6 +34,7 @@ public class EdgeList extends Vector<Edge> {
 
 	/**
 	 * Creates a new object from the {@see EdgeList} class.
+	 * 
 	 * @param c
 	 */
 	public EdgeList(Collection<? extends Edge> c) {
@@ -40,6 +43,7 @@ public class EdgeList extends Vector<Edge> {
 
 	/**
 	 * Creates a new object from the {@see EdgeList} class.
+	 * 
 	 * @param initialCapacity
 	 * @param capacityIncrement
 	 */
