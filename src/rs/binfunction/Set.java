@@ -31,7 +31,6 @@ public class Set extends ArrayList<Cube> {
   for (int i = 0; i < this.size(); i++) if (this.get(i).and(c).isValid()) return true;
   return false;
  }
- 
  public boolean intersects (Set s) {
   for (int i = 0; i < s.size(); i++) if (this.intersects(s.get(i))) return true;
   return false;

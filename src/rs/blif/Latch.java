@@ -18,4 +18,5 @@ public class Latch implements GraphNode {
  @Override public String name() { return output; }
  @Override public List<GraphNode> in () { return this.in; }
  @Override public Set<GraphNode> out() { return this.out; }
+ @Override public void free () { if (!out.isEmpty()) throw new RuntimeException("Cannot free GraphNode while it is used by other nodes!"); in.set(0, null); }
 }

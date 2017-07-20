@@ -8,10 +8,11 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Set;
 
-public interface GraphNode {
+public interface GraphNode extends FreeableNode {
  public String name ();
  public List<GraphNode> in ();
  public Set<GraphNode> out ();
+ public void free ();
  
  
  public static class UnknownNode implements GraphNode {
@@ -23,6 +24,7 @@ public interface GraphNode {
   @Override public String name() { return this.name; }
   @Override public List<GraphNode> in() { return null; }
   @Override public Set<GraphNode> out() { return out; }
+  @Override public void free () { if (!out.isEmpty()) throw new RuntimeException("Cannot free GraphNode while it is used by other nodes!"); }
  }
  
  
@@ -35,6 +37,7 @@ public interface GraphNode {
   @Override public String name() { return this.name; }
   @Override public List<GraphNode> in() { return null; }
   @Override public Set<GraphNode> out() { return out; }
+  @Override public void free () { if (!out.isEmpty()) throw new RuntimeException("Cannot free GraphNode while it is used by other nodes!"); }
  }
  
   
@@ -46,6 +49,7 @@ public interface GraphNode {
   @Override public String name() { return this.in.get(0).name(); }
   @Override public List<GraphNode> in() { return in; }
   @Override public Set<GraphNode> out() { return null; }
+  @Override public void free () { in.set(0, null); }
  }
  
  
@@ -69,7 +73,7 @@ public interface GraphNode {
   }
   @Override public boolean remove (Object n) {
    boolean b = super.remove(n);
-   if (b) ((GraphNode)n).out().remove(parent);
+   if (b && n != null) ((GraphNode)n).out().remove(parent);
    return b;
   }
   @Override public GraphNode remove (int i) {
@@ -83,6 +87,14 @@ public interface GraphNode {
    if (n != null) n.out().add(parent);
    return p;
   }
+  @Override public void clear () {
+   for (int i = 0; i < this.size(); i++) {
+    this.get(i).out().remove(parent);
+    this.set(i, null);
+   }
+   super.clear();
+  }
+  @Override public boolean removeAll(Collection<?> c) { throw new RuntimeException("This operation is not allowed on current list!"); }
  }
  
  
@@ -93,11 +105,11 @@ public interface GraphNode {
   private GraphNode item;
   private final GraphNode parent;
   public OneItemList (GraphNode parent) { this.parent = parent; }
-  @Override public boolean add(GraphNode arg0) { return false; }
-  @Override public void add(int arg0, GraphNode arg1) { }
-  @Override public boolean addAll(Collection arg0) { return false; }
-  @Override public boolean addAll(int arg0, Collection arg1) { return false; }
-  @Override public void clear() { }
+  @Override public boolean add(GraphNode arg0) { throw new RuntimeException("This operation is not allowed on current list!"); }
+  @Override public void add(int arg0, GraphNode arg1) { throw new RuntimeException("This operation is not allowed on current list!"); }
+  @Override public boolean addAll(Collection arg0) { throw new RuntimeException("This operation is not allowed on current list!"); }
+  @Override public boolean addAll(int arg0, Collection arg1) { throw new RuntimeException("This operation is not allowed on current list!"); }
+  @Override public void clear() { throw new RuntimeException("This operation is not allowed on current list!"); }
   @Override public boolean contains(Object arg0) { return item == arg0; }
   @Override public boolean containsAll(Collection arg0) {
    if (arg0.size() > 1) return false;
@@ -137,16 +149,16 @@ public interface GraphNode {
    }
    @Override public GraphNode previous() { return null; }
    @Override public int previousIndex() { return -1; }
-   @Override public void remove() { }
-   @Override public void set(GraphNode arg0) { }
+   @Override public void remove() { throw new RuntimeException("This operation is not allowed on current list!"); }
+   @Override public void set(GraphNode arg0) { throw new RuntimeException("This operation is not allowed on current list!"); }
   }
   @Override public int lastIndexOf(Object arg0) { return this.indexOf(arg0); }
   @Override public ListIterator<GraphNode> listIterator() { return new OneItemIterator(item); }
-  @Override public ListIterator<GraphNode> listIterator(int arg0) { return null; }
-  @Override public boolean remove(Object arg0) { return false; }
-  @Override public GraphNode remove(int arg0) { return null; }
-  @Override public boolean removeAll(Collection arg0) { return false; }
-  @Override public boolean retainAll(Collection arg0) { return false; }
+  @Override public ListIterator<GraphNode> listIterator(int arg0) { throw new RuntimeException("This operation is not allowed on current list!"); }
+  @Override public boolean remove(Object arg0) { throw new RuntimeException("This operation is not allowed on current list!"); }
+  @Override public GraphNode remove(int arg0) { throw new RuntimeException("This operation is not allowed on current list!"); }
+  @Override public boolean removeAll(Collection arg0) { throw new RuntimeException("This operation is not allowed on current list!"); }
+  @Override public boolean retainAll(Collection arg0) { throw new RuntimeException("This operation is not allowed on current list!"); }
   @Override public GraphNode set(int arg0, GraphNode arg1) {
    if (arg0 == 0) {
     GraphNode p = item;
@@ -168,6 +180,6 @@ public interface GraphNode {
    return r;
   }
   @SuppressWarnings("unchecked")
-  @Override public Object[] toArray(Object[] arg0) { return null; }
+  @Override public Object[] toArray(Object[] arg0) { Object[] a = new Object[1]; a[0] = item; return a; }
  }
 }

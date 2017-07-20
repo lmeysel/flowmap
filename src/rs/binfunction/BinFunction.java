@@ -15,11 +15,15 @@ public class BinFunction implements GraphNode {
  public int numInputs () { return this.on.width(); }
  private final SelfLinkingList in;
  private final java.util.Set<GraphNode> out = new HashSet<GraphNode>();
- private String name = null;
+ protected String name = null;
  // implementation of GraphNode
  @Override public String name () { return this.name; }
  @Override public List<GraphNode> in () { return this.in; }
  @Override public java.util.Set<GraphNode> out() { return this.out; } // to be overridden
+ @Override public void free () {
+  if (!out.isEmpty()) throw new RuntimeException("Cannot free GraphNode while it is used by other nodes!");
+  in().clear();
+ }
  // definition of two-bit representations
  public final static int INV = 0;
  public final static int ONE = 2;
@@ -166,7 +170,7 @@ public class BinFunction implements GraphNode {
    map[i] = -1;
    for (int j = 0; j < foreign.numInputs(); j++) {
     if (foreign.in.get(j) == null) return false;
-    if (this.in.get(i).name().equals(foreign.in.get(j).name())) {
+    if (this.in.get(i) == foreign.in.get(j)) {
      map[i] = j;
      if (i != j) eqMap = false;
     }
@@ -217,10 +221,10 @@ public class BinFunction implements GraphNode {
  
  
  public static class FunctionCreator {
-  public BinFunction newFunction (int numInputs) {
+  public BinFunction newFunction (int numInputs, Object parent) {
    return new BinFunction(numInputs);
   }
-  public BinFunction newFunction (List<GraphNode> in, String name) {
+  public BinFunction newFunction (List<GraphNode> in, String name, Object parent) {
    return new BinFunction(in, name);
   }
  }
