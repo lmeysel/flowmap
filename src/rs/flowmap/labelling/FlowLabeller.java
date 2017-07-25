@@ -57,7 +57,7 @@ public class FlowLabeller {
 		VertexSet stage = po;
 		while (stage.size() != 0) {
 			VertexSet next = new VertexSet();
-			
+
 		}
 	}
 

@@ -3,12 +3,13 @@ package rs.blif;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
 import rs.binfunction.BinFunction;
-import rs.graphnode.GraphNode;
+import rs.graphnode.*;
 
 /**
  * The class Model represents one BLIF-Model. Only data-fields necessary for Espresso are implemented yet.
@@ -17,11 +18,11 @@ import rs.graphnode.GraphNode;
 public class Model {
  private BLIF parent;    public BLIF parent() { return this.parent; }
  private String name;   public String name() { return this.name; }
- public final List<BinFunction> functions = new ArrayList<BinFunction>();
- public final List<Latch> latches = new ArrayList<Latch>();
- public final List<SubCircuit> subCircuits = new ArrayList<SubCircuit>();
- public final List<GraphNode.InputNode> inputs = new ArrayList<GraphNode.InputNode>();
- public final List<GraphNode.OutputNode> outputs = new ArrayList<GraphNode.OutputNode>();
+ public final FreeingArrayList<BinFunction> functions = new FreeingArrayList<BinFunction>();
+ public final FreeingArrayList<Latch> latches = new FreeingArrayList<Latch>();
+ public final FreeingArrayList<SubCircuit> subCircuits = new FreeingArrayList<SubCircuit>();
+ public final FreeingArrayList<GraphNode.InputNode> inputs = new FreeingArrayList<GraphNode.InputNode>();
+ public final FreeingArrayList<GraphNode.OutputNode> outputs = new FreeingArrayList<GraphNode.OutputNode>();
  protected Boolean inputsAndOutputsDeclared = false;
  public boolean isSeparateFile = false;
  boolean saved = false;
@@ -93,12 +94,12 @@ public class Model {
   if (!firstModel) fileWriter.write(".model "+this.name+"\n");
   if (this.inputs.size() != 0) {
    String s = ".inputs";
-   for (int i = 0; i < this.inputs.size(); i++) s += " "+this.inputs.get(i);
+   for (int i = 0; i < this.inputs.size(); i++) s += " "+this.inputs.get(i).name();
    fileWriter.write(s+"\n");
   }
   if (this.outputs.size() != 0) {
    String s = ".outputs";
-   for (int i = 0; i < this.outputs.size(); i++) s += " "+this.outputs.get(i);
+   for (int i = 0; i < this.outputs.size(); i++) s += " "+this.outputs.get(i).name();
    fileWriter.write(s+"\n");
   }
   // write functions
@@ -164,8 +165,15 @@ public class Model {
    if (currentList == model.subCircuits) {
     if (currentPos < currentList.size()) {
      currentItem++;
-     if (currentItem >= ((SubCircuit)currentList.get(currentPos)).in.size()) { currentPos++; currentItem = -1; internalNext(); return; }
-     next = ((SubCircuit)currentList.get(currentPos)).in.get(currentItem);
+     int inSize = ((SubCircuit)currentList.get(currentPos)).in.size();
+     if (currentItem >= inSize + ((SubCircuit)currentList.get(currentPos)).out.size()) {
+      currentPos++;
+      currentItem = -1;
+      internalNext();
+      return;
+     }
+     if (currentItem < inSize) next = ((SubCircuit)currentList.get(currentPos)).in.get(currentItem);
+     else next = ((SubCircuit)currentList.get(currentPos)).out.get(currentItem - inSize);
     } else { currentList = model.outputs; currentPos = -1; }
    }
    if (currentList == model.outputs) {
@@ -200,5 +208,38 @@ public class Model {
    }
    return m;
   }
+ }
+ 
+ 
+ 
+ 
+ @SuppressWarnings("hiding")
+ public static class FreeingArrayList<FreeableNode> extends ArrayList<FreeableNode> {
+  private static final long serialVersionUID = 2614432379282826238L;
+  public FreeingArrayList (int size) {
+   super(size);
+  }
+  public FreeingArrayList () {
+   this(0);
+  }
+  @Override public boolean remove (Object n) {
+   if (n != null) ((GraphNode)n).free();
+   return super.remove(n);
+  }
+  @Override public FreeableNode remove (int i) {
+   FreeableNode n = super.remove(i);
+   if (n != null) ((rs.graphnode.FreeableNode) n).free();
+   return n;
+  }
+  @Override public FreeableNode set (int i, FreeableNode n) {
+   FreeableNode p = super.set(i, n);
+   if (p != null && p != n) ((rs.graphnode.FreeableNode) p).free();
+   return p;
+  }
+  @Override public void clear () {
+   for (int i = 0; i < this.size(); i++) this.set(i, null);
+   super.clear();
+  }
+  @Override public boolean removeAll(Collection<?> c) { throw new RuntimeException("This operation is not allowed on current list!"); }
  }
 }

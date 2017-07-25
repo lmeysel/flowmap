@@ -112,7 +112,7 @@ public class BLIF {
        List<GraphNode> in = new ArrayList<GraphNode>(sp.length - 2);
        for (int i = 0; i < sp.length - 2; i++) in.add(new GraphNode.UnknownNode(sp[i+1]));
        currentFunctions = new BinFunction[1];
-       currentFunctions[0] = functionType.newFunction(in, sp[sp.length-1]);
+       currentFunctions[0] = functionType.newFunction(in, sp[sp.length-1], currentModel);
        currentModel.functions.add(currentFunctions[0]);
        break;
       case ".subckt" :
@@ -199,7 +199,7 @@ public class BLIF {
   }
   for (int i = 0; i < outCnt; i++) {
    model.outputs.add(new GraphNode.OutputNode(new GraphNode.UnknownNode("z" + i)));
-   r[i] = functionType.newFunction(in, "z" + i);
+   r[i] = functionType.newFunction(in, "z" + i, model);
    model.functions.add(r[i]);
   }
   return r;
