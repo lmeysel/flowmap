@@ -22,3 +22,12 @@
 hs_err_pid*
 /bin/
 .classpath
+
+/report/*.aux
+/report/*.bbl
+/report/*.blg
+/report/*.log
+/report/*.toc
+/report/*.sav
+/report/*.log
+/report/*.out

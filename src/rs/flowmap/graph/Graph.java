@@ -3,6 +3,7 @@ package rs.flowmap.graph;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.HashMap;
 
 /**
  * 
@@ -23,14 +24,14 @@ public class Graph {
 	}
 
 	/**
-	 * {@inheritDoc}
+	 * Gets all edges of the graph.
 	 */
 	public EdgeList getEdges() {
 		return edges;
 	}
 
 	/**
-	 * {@inheritDoc}
+	 * Gets all vertices of the graph
 	 */
 	public VertexList getVertices() {
 		return vertices;
@@ -46,10 +47,28 @@ public class Graph {
 
 			wtr.write("digraph G {" + br);
 
+			HashMap<Integer, VertexList> level = new HashMap<>();
+
 			// define vertices
 			for (Vertex v : vertices) {
-				wtr.write("n" + v.getId() + " [label=<" + v.getHeight() + ">]" + br);
+				if (!level.containsKey(v.getHeight()))
+					level.put(v.getHeight(), new VertexList());
+				level.get(v.getHeight()).add(v);
+				wtr.write("n" + v.getId() + " [label=<" + v.getId() + " | " + v.getLabel() + ">]" + br);
 			}
+
+			// define ranks
+			level.forEach((Integer lvl, VertexList lst) -> {
+				try {
+					wtr.write("{ rank=same; ");
+					for (Vertex v : lst)
+						wtr.write("n" + v.getId() + "; ");
+					wtr.write("}" + br);
+
+				} catch (IOException x) {
+					System.err.println(x.getMessage());
+				}
+			});
 
 			// define edges
 			for (Edge e : edges) {
@@ -62,5 +81,15 @@ public class Graph {
 		} catch (IOException x) {
 			System.err.println(x.getMessage());
 		}
+	}
+
+	/**
+	 * Removes a vertex and all in- and outbound edges.
+	 */
+	public void removeVertex(Vertex v) {
+		vertices.remove(v);
+		v.inbound.forEach((Edge e) -> edges.remove(e));
+		v.outbound.forEach((Edge e) -> edges.remove(e));
+		v.destroy();
 	}
 }

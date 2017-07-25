@@ -11,6 +11,7 @@ public class Vertex {
 
 	protected EdgeList inbound, outbound;
 	protected VertexList successors, predecessors;
+	protected VertexSet allPredecessors;
 	protected int height, label;
 	private int id;
 
@@ -26,10 +27,15 @@ public class Vertex {
 	}
 
 	/**
-	 * {@inheritDoc}
+	 * Adds an inbound edge to this node. The edge's source will automatically be added to
+	 * predecessors list.
+	 * 
+	 * @param e
+	 *           The inbound edge to add.
 	 */
-	public EdgeList getOutbounds() {
-		return this.outbound;
+	public void addInbound(Edge e) {
+		this.predecessors.add(e.getSource());
+		this.inbound.add(e);
 	}
 
 	/**
@@ -45,71 +51,109 @@ public class Vertex {
 	}
 
 	/**
-	 * {@inheritDoc}
-	 */
-	public EdgeList getInbounds() {
-		return this.inbound;
-	}
-
-	/**
-	 * Adds an inbound edge to this node. The edge's source will automatically be added to
-	 * predecessors list.
-	 * 
-	 * @param e
-	 *           The inbound edge to add.
-	 */
-	public void addInbound(Edge e) {
-		this.predecessors.add(e.getSource());
-		this.inbound.add(e);
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	public VertexList getSuccessors() {
-		return this.successors;
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	public VertexList getPredecessors() {
-		return this.predecessors;
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	public int getId() {
-		return this.id;
-	}
-
-	/**
-	 * {@inheritDoc}
+	 * Gets the topological height of this node.
 	 */
 	public int getHeight() {
 		return height;
 	}
 
 	/**
-	 * {@inheritDoc}
+	 * Gets the identifier of this node.
 	 */
-	public void setHeight(int height) {
-		this.height = height;
+	public int getId() {
+		return this.id;
 	}
 
 	/**
-	 * {@inheritDoc}
+	 * Gets the inbound edges.
+	 */
+	public EdgeList getInbounds() {
+		return this.inbound;
+	}
+
+	/**
+	 * Gets the flow label of this node.
 	 */
 	public int getLabel() {
 		return label;
 	}
 
 	/**
-	 * {@inheritDoc}
+	 * Gets the outbound edges.
+	 */
+	public EdgeList getOutbounds() {
+		return this.outbound;
+	}
+
+	/**
+	 * Gets the predecessors of this vertex.
+	 */
+	public VertexList getPredecessors() {
+		return this.predecessors;
+	}
+
+	/**
+	 * Gets <b>all</b> (direct and indirect) predecessor nodes of this node. The set of all
+	 * predecessors will be created at first time of this method call.
+	 */
+	public VertexSet getAllPredecessors() {
+		if (allPredecessors == null) {
+			allPredecessors = new VertexSet();
+			predecessors.forEach((Vertex v) -> {
+				allPredecessors.addAll(v.getAllPredecessors());
+				allPredecessors.add(v);
+			});
+		}
+		return allPredecessors;
+	}
+
+	/**
+	 * Gets the sucessors of this vertex.
+	 */
+	public VertexList getSuccessors() {
+		return this.successors;
+	}
+
+	/**
+	 * Sets the topological height of this node.
+	 */
+	public void setHeight(int height) {
+		this.height = height;
+	}
+
+	/**
+	 * Sets the flow label of this node.
 	 */
 	public void setLabel(int label) {
 		this.label = label;
+	}
+
+	/**
+	 * Sets the label of the vertex when it is larger than the vertex' current label is.
+	 * 
+	 * @param label
+	 *           The new label of the vertex.
+	 */
+	public void setLabelAtLeast(int label) {
+		this.label = Math.max(label, this.label);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public String toString() {
+		return "{ ID: " + id + ", height: " + height + ", label: " + label + " }";
+	}
+
+	/**
+	 * Removes all edges from and to this node from the sucessor and predecessors.
+	 */
+	public void destroy() {
+		inbound.forEach((Edge e) -> e.source.outbound.remove(e));
+		outbound.forEach((Edge e) -> e.target.inbound.remove(e));
+		successors.forEach((Vertex v) -> v.predecessors.remove(this));
+		predecessors.forEach((Vertex v) -> v.successors.remove(this));
 	}
 
 }

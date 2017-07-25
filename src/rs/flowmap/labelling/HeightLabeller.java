@@ -30,8 +30,7 @@ public class HeightLabeller {
 			});
 			stage = javaSucks;
 		}
-
-		// does it make sense, not sure... :)
+		
 		v.sort((Vertex v1, Vertex v2) -> v1.getHeight() - v2.getHeight());
 	}
 }

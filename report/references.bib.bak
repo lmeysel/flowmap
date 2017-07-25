@@ -1,0 +1,20 @@
+% Encoding: UTF-8
+
+@Conference{Hochberger2017,
+  author = {Christian Hochberger},
+  title  = {Low-Level Synthesis (Lecture)},
+  year   = {2017},
+}
+
+@Book{lim2008practical,
+  title     = {Practical Problems in VLSI Physical Design Automation},
+  publisher = {Springer Netherlands},
+  year      = {2008},
+  author    = {Lim, S.K.},
+  series    = {SpringerLink: Springer e-Books},
+  isbn      = {9781402066276},
+  lccn      = {2008930560},
+  url       = {https://books.google.de/books?id=F8j471tDxbgC},
+}
+
+@Comment{jabref-meta: databaseType:bibtex;}
