@@ -3,7 +3,6 @@ package rs.flowmap.graph;
 import java.util.HashMap;
 
 import edu.princeton.cs.algs4.FlowNetwork;
-import edu.princeton.cs.algs4.In;
 
 /**
  * 
@@ -19,18 +18,17 @@ public class MappedFlowNetwork extends FlowNetwork {
 	 * Creates a new object from the {@see MappedFlowNetwork} class.
 	 * 
 	 * @param V
+	 *           The number of vertices. Assumes the last two nodes are source and destination nodes,
+	 *           the other ones are the split network between. Therefore the minimum number of
+	 *           vertices must be an even number and at least 4. The Positions of the nodes should be
+	 *           aligned as following:<br/>
+	 *           [n: original nodes | n: split nodes | 1: source | 1: destination], whereas n is the
+	 *           number of the nodes in the original network between source and target.
 	 */
 	public MappedFlowNetwork(int V) {
 		super(V);
-	}
-
-	/**
-	 * Creates a new object from the {@see MappedFlowNetwork} class.
-	 * 
-	 * @param in
-	 */
-	public MappedFlowNetwork(In in) {
-		super(in);
+		if (V % 2 != 0 || V < 4)
+			throw new IllegalArgumentException("Parameter V must be an even number and greater than 4.");
 	}
 
 	/**
@@ -79,5 +77,15 @@ public class MappedFlowNetwork extends FlowNetwork {
 	 */
 	public Vertex getVertexByID(int id) {
 		return i2v.get(id);
+	}
+
+	/**
+	 * Gets the offset between original nodes and split nodes (i.e. <code>n</code> as described in
+	 * ctor)
+	 * 
+	 * @return The number of original nodes in the graph, <code>V()/2-1</code>
+	 */
+	public int getOffset() {
+		return (V() >> 1) - 1;
 	}
 }

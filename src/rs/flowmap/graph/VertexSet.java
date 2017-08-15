@@ -12,6 +12,11 @@ import java.util.HashSet;
 public class VertexSet extends HashSet<Vertex> {
 
 	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 4305226914479459439L;
+
+	/**
 	 * Creates a new object from the {@see VertexSet} class.
 	 */
 	public VertexSet() {
@@ -19,6 +24,7 @@ public class VertexSet extends HashSet<Vertex> {
 
 	/**
 	 * Creates a new object from the {@see VertexSet} class.
+	 * 
 	 * @param c
 	 */
 	public VertexSet(Collection<? extends Vertex> c) {
@@ -27,6 +33,7 @@ public class VertexSet extends HashSet<Vertex> {
 
 	/**
 	 * Creates a new object from the {@see VertexSet} class.
+	 * 
 	 * @param initialCapacity
 	 */
 	public VertexSet(int initialCapacity) {
@@ -35,6 +42,7 @@ public class VertexSet extends HashSet<Vertex> {
 
 	/**
 	 * Creates a new object from the {@see VertexSet} class.
+	 * 
 	 * @param initialCapacity
 	 * @param loadFactor
 	 */

@@ -21,7 +21,6 @@ public class SimpleGraph extends Graph {
 	public SimpleGraph() {
 		VertexList v = super.vertices;
 		EdgeList e = super.edges;
-
 	}
 
 	/**

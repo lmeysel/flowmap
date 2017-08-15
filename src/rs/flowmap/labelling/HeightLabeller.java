@@ -13,6 +13,7 @@ import rs.flowmap.graph.VertexList;
  * @author Ludwig Meysel
  * @version 16.07.2017
  */
+@Deprecated
 public class HeightLabeller {
 
 	public static void label(Graph graph) {
@@ -30,7 +31,7 @@ public class HeightLabeller {
 			});
 			stage = javaSucks;
 		}
-		
+
 		v.sort((Vertex v1, Vertex v2) -> v1.getHeight() - v2.getHeight());
 	}
 }

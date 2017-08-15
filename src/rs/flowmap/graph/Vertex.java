@@ -1,5 +1,7 @@
 package rs.flowmap.graph;
 
+import java.util.Comparator;
+
 /**
  * 
  * @author Ludwig Meysel
@@ -12,7 +14,7 @@ public class Vertex {
 	protected EdgeList inbound, outbound;
 	protected VertexList successors, predecessors;
 	protected VertexSet allPredecessors;
-	protected int height, label;
+	protected int height = -1, label;
 	private int id;
 
 	/**
@@ -54,6 +56,11 @@ public class Vertex {
 	 * Gets the topological height of this node.
 	 */
 	public int getHeight() {
+		if (height == -1)
+			if (predecessors.size() > 0)
+				predecessors.stream().max(Comparator.comparing((Vertex v) -> v.getHeight())).ifPresent((Vertex v) -> height = v.height + 1);
+			else
+				height = 0;
 		return height;
 	}
 
@@ -117,6 +124,7 @@ public class Vertex {
 	/**
 	 * Sets the topological height of this node.
 	 */
+	@Deprecated
 	public void setHeight(int height) {
 		this.height = height;
 	}

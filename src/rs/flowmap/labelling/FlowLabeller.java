@@ -1,10 +1,13 @@
 package rs.flowmap.labelling;
 
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Vector;
 
 import edu.princeton.cs.algs4.FlowEdge;
-import edu.princeton.cs.algs4.FlowNetwork;
 import edu.princeton.cs.algs4.FordFulkerson;
+import rs.flowmap.graph.Edge;
+import rs.flowmap.graph.EdgeList;
 import rs.flowmap.graph.Graph;
 import rs.flowmap.graph.MappedFlowNetwork;
 import rs.flowmap.graph.Vertex;
@@ -31,10 +34,10 @@ public class FlowLabeller {
 	 *           The maximum flow.
 	 */
 	public static void label(Graph graph, int k) {
-		// assumes the vertexes are already sorted by height (done by HeightLabeller)
-		HashMap<Vertex, VertexSet> cluster = new HashMap<>();
-		VertexSet po = new VertexSet(); // primary outputs
-		graph.getVertices().stream().forEach((Vertex v) -> {
+		// assumes the vertices are already sorted by height (done by HeightLabeller)
+		HashMap<Vertex, VertexSet> clusters = new HashMap<>();
+		VertexList stage = new VertexList(); // filled with POs in labelling-phase
+		graph.getVertices().stream().sorted((Vertex v1, Vertex v2) -> v1.getHeight() - v2.getHeight()).forEach((Vertex v) -> {
 			if (v.getPredecessors().size() == 0) {
 				v.getSuccessors().forEach((Vertex s) -> s.setLabelAtLeast(1));
 				return; // for primary inputs no FordFulkerson is necessary
@@ -48,17 +51,55 @@ public class FlowLabeller {
 			v.getSuccessors().forEach((Vertex s) -> s.setLabelAtLeast(lbl));
 
 			if (v.getOutbounds().size() == 0)
-				po.add(v);
+				stage.add(v);
 
-			//if (v.getId() == 16)
-			//	Util.writeDOT("fn-debug.txt", ff, fn);
+			VertexSet c = new VertexSet();
+			int delta = fn.getOffset();
+			for (int i = 0; i < delta; i++)
+				if (ff.inCut(i) && !ff.inCut(i + delta)) {
+					c.add(fn.getVertexByID(i));
+				}
+			clusters.put(v, c);
+
+			// test
+			if (v.getId() == 1)
+				Util.writeDOT("fn-debug.txt", ff, fn);
 		});
 
-		VertexSet stage = po;
+		Graph g = new Graph();
+		EdgeList edges = g.getEdges();
+		VertexList vertices = g.getVertices();
+		HashMap<Vertex, Vertex> vtxMap = new HashMap<>(); // maps vertices within original and LUT-packed graph
+		VertexSet packed = new VertexSet();
 		while (stage.size() != 0) {
-			VertexSet next = new VertexSet();
+			Vertex v = stage.remove(0), vn = null;
+			if (packed.contains(v))
+				continue;
 
+			if (!vtxMap.containsKey(v)) {
+				vn = new Vertex();
+				vertices.add(vn);
+				vtxMap.put(v, vn);
+			} else
+				vn = vtxMap.get(v);
+
+			for (Vertex p : clusters.get(v)) {
+				if (p.getInbounds().size() != 0) // Do not stage PIs
+					stage.add(p);
+				Vertex tmp = null;
+				if (!vtxMap.containsKey(p)) {
+					tmp = new Vertex();
+					vertices.add(tmp);
+					vtxMap.put(p, tmp);
+				} else
+					tmp = vtxMap.get(p);
+
+				edges.add(new Edge(tmp, vn));
+			}
+
+			packed.add(v);
 		}
+		g.writeDOT("packed.txt");
 	}
 
 	/**

@@ -5,7 +5,6 @@ import rs.flowmap.graph.Graph;
 import rs.flowmap.graph.Vertex;
 import rs.flowmap.graph.VertexList;
 import rs.flowmap.labelling.FlowLabeller;
-import rs.flowmap.labelling.HeightLabeller;
 
 /**
  * 
@@ -48,7 +47,7 @@ public class LectureGraph2 extends Graph {
 
 	public static void main(String[] args) {
 		Graph graph = new LectureGraph2();
-		HeightLabeller.label(graph);
+		//HeightLabeller.label(graph);
 		FlowLabeller.label(graph, 3);
 		graph.writeDOT("graph-debug.txt");
 		System.out.println("LectureGraph2 test done. See graph-debug.txt for results.");

@@ -6,7 +6,6 @@ import rs.flowmap.graph.Graph;
 import rs.flowmap.graph.Vertex;
 import rs.flowmap.graph.VertexList;
 import rs.flowmap.labelling.FlowLabeller;
-import rs.flowmap.labelling.HeightLabeller;
 
 /**
  * Example Graph as it is depicted in lecture chap. 4, slide 42, inside dashed line.
@@ -17,7 +16,6 @@ import rs.flowmap.labelling.HeightLabeller;
 public class LectureGraph extends Graph {
 	public static void main(String[] args) {
 		Graph g = new LectureGraph();
-		HeightLabeller.label(g);
 		FlowLabeller.label(g, 3);
 
 		g.writeDOT("graph-debug.txt");
@@ -52,7 +50,7 @@ public class LectureGraph extends Graph {
 		e.add(new Edge(v.get(6), v.get(10)));
 
 		// make graph complete (ignore dashed line on slide)
-		if (false) {
+		if (true) {
 			for (int i = 0; i < 5; i++)
 				v.add(new Vertex());
 
