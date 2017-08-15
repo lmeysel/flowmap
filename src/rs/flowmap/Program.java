@@ -1,9 +1,11 @@
 package rs.flowmap;
 
 import rs.blif.BLIF;
-import rs.blifflow.GraphModel;
-import rs.flowmap.test.Util;
 import rs.blifflow.GraphFunction;
+import rs.blifflow.GraphModel;
+import rs.flowmap.graph.Graph;
+import rs.flowmap.labelling.FlowLabeller;
+import rs.flowmap.test.Util;
 
 /**
  * 
@@ -26,8 +28,13 @@ public class Program {
 		// decompose
 		Util.writeDOT("blubb1.txt", rootModel.iterateGraphNodes());
 		rootModel.decompose();
+
+		Graph right = rootModel.getRightModel();
+		FlowLabeller.label(right, 3);
+		right.writeDOT("graph-debug.txt");
+
 		//rootModel.printNetwork();
-		Util.writeDOT("blubb2.txt", rootModel.iterateGraphNodes());
+		//Util.writeDOT("blubb2.txt", rootModel.iterateGraphNodes());
 		// save output
 		if (args.length >= 2) {
 			dat.saveToFolder(args[1]);

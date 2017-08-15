@@ -66,7 +66,9 @@ public class MappedFlowNetwork extends FlowNetwork {
 	 *           the Vertex whose ID is required.
 	 */
 	public int getVertexID(Vertex vertex) {
-		return v2i.get(vertex);
+		if (v2i.containsKey(vertex))
+			return v2i.get(vertex);
+		return -1;
 	}
 
 	/**

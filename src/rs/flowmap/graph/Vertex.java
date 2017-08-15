@@ -2,6 +2,8 @@ package rs.flowmap.graph;
 
 import java.util.Comparator;
 
+import rs.graphnode.GraphNode;
+
 /**
  * 
  * @author Ludwig Meysel
@@ -11,6 +13,7 @@ import java.util.Comparator;
 public class Vertex {
 	private static int idCnt = 0;
 
+	protected GraphNode horrible;
 	protected EdgeList inbound, outbound;
 	protected VertexList successors, predecessors;
 	protected VertexSet allPredecessors;
@@ -26,6 +29,17 @@ public class Vertex {
 		this.predecessors = new VertexList();
 		this.successors = new VertexList();
 		this.id = idCnt++;
+	}
+
+	/**
+	 * Creates a new object from the {@see Vertex} class.
+	 * 
+	 * @param horrible
+	 *           The wrapped node.
+	 */
+	public Vertex(GraphNode horrible) {
+		this();
+		this.horrible = horrible;
 	}
 
 	/**
@@ -57,9 +71,11 @@ public class Vertex {
 	 */
 	public int getHeight() {
 		if (height == -1)
-			if (predecessors.size() > 0)
-				predecessors.stream().max(Comparator.comparing((Vertex v) -> v.getHeight())).ifPresent((Vertex v) -> height = v.height + 1);
-			else
+			if (predecessors.size() > 0) {
+				for (Vertex v : predecessors)
+					height = Math.max(height, v.getHeight());
+				height++;
+			} else
 				height = 0;
 		return height;
 	}
@@ -144,6 +160,13 @@ public class Vertex {
 	 */
 	public void setLabelAtLeast(int label) {
 		this.label = Math.max(label, this.label);
+	}
+
+	/**
+	 * Gets the wrapped node if exists. Null if the vertex has not been created with an inner node.
+	 */
+	public GraphNode getHorrible() {
+		return this.horrible;
 	}
 
 	/**

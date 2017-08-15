@@ -7,8 +7,8 @@ import java.util.Iterator;
 import java.util.List;
 
 import edu.princeton.cs.algs4.FlowEdge;
-import edu.princeton.cs.algs4.FlowNetwork;
 import edu.princeton.cs.algs4.FordFulkerson;
+import rs.flowmap.graph.MappedFlowNetwork;
 import rs.graphnode.GraphNode;
 
 /**
@@ -26,7 +26,7 @@ public class Util {
 	 * @param ff
 	 *           The FordFulkerson containting the net to write as DOT
 	 */
-	public static void writeDOT(String filename, FordFulkerson ff, FlowNetwork net) {
+	public static void writeDOT(String filename, FordFulkerson ff, MappedFlowNetwork net) {
 		try {
 			String br = System.getProperty("line.separator");
 			BufferedWriter wtr = new BufferedWriter(new FileWriter(filename));
@@ -38,7 +38,7 @@ public class Util {
 				wtr.write(e.from() + " -> " + e.to() + " [label=<" + (int)e.capacity() + "/" + (int)e.flow() + ">]" + br);
 			}
 			for (int i = 0; i < net.V(); i++)
-				wtr.write(i + " [color=" + (ff.inCut(i) ? "red" : "black") + "]" + br);
+				wtr.write(i + " [label=<" + (i < (net.V() >> 1) - 1 ? net.getVertexByID(i).getId() : "[" + i + "]") + ">;color=" + (ff.inCut(i) ? "red" : "black") + "]" + br);
 
 			wtr.write("}" + br);
 

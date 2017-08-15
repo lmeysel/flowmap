@@ -1,9 +1,19 @@
 package rs.blifflow;
 
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.function.Function;
 
 import rs.binfunction.BinFunction;
-import rs.blif.*;
+import rs.blif.BLIF;
+import rs.blif.Latch;
+import rs.blif.Model;
+import rs.blif.SubCircuit;
+import rs.flowmap.graph.Edge;
+import rs.flowmap.graph.EdgeList;
+import rs.flowmap.graph.Graph;
+import rs.flowmap.graph.Vertex;
+import rs.flowmap.graph.VertexList;
 import rs.graphnode.GraphNode;
 
 /**
@@ -54,6 +64,39 @@ public class GraphModel extends Model {
 				}
 			}
 		}
+	}
+
+	/**
+	 * Gets the Graph in the right model.
+	 * 
+	 * @return A graph object containing the right model.
+	 */
+	public Graph getRightModel() {
+		Graph ret = new Graph();
+		EdgeList edges = ret.getEdges();
+		VertexList vertices = ret.getVertices();
+
+		HashMap<GraphNode, Vertex> map = new HashMap<>();
+		Function<GraphNode, Vertex> get = (GraphNode g) -> {
+			if (map.containsKey(g))
+				return map.get(g);
+			else {
+				Vertex r = new Vertex(g);
+				map.put(g, r);
+				return r;
+			}
+		};
+
+		Iterator<GraphNode> it = this.iterateGraphNodes();
+		while (it.hasNext()) {
+			GraphNode nde = it.next();
+			Vertex v = get.apply(nde);
+			vertices.add(v);
+			if (nde.in() != null)
+				for (GraphNode gn : nde.in())
+					edges.add(new Edge(get.apply(gn), v));
+		}
+		return ret;
 	}
 
 	/**

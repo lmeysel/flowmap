@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Vector;
 
+import com.sun.xml.internal.bind.v2.runtime.unmarshaller.XsiNilLoader.Array;
+
 import edu.princeton.cs.algs4.FlowEdge;
 import edu.princeton.cs.algs4.FordFulkerson;
 import rs.flowmap.graph.Edge;
@@ -46,23 +48,31 @@ public class FlowLabeller {
 			MappedFlowNetwork fn = getFlowNet(v);
 
 			FordFulkerson ff = new FordFulkerson(fn, fn.V() - 2, fn.V() - 1);
-			int lbl = ff.value() <= k ? v.getLabel() : v.getLabel() + 1;
-			v.setLabelAtLeast(lbl);
-			v.getSuccessors().forEach((Vertex s) -> s.setLabelAtLeast(lbl));
+
+			VertexSet c = new VertexSet();
+			int delta = fn.getOffset();
+			if (ff.value() <= k) {
+				v.setLabelAtLeast(v.getLabel());
+
+				for (int i = 0; i < delta; i++)
+					if (ff.inCut(i) && !ff.inCut(i + delta)) {
+						c.add(fn.getVertexByID(i));
+					}
+			} else {
+				v.setLabelAtLeast(v.getLabel() + 1);
+				for (int i = 0; i < delta; i++)
+					if (ff.inCut(i) && !ff.inCut(i + delta)) {
+						c.add(fn.getVertexByID(i));
+					}
+			}
+			v.getSuccessors().forEach((Vertex s) -> s.setLabelAtLeast(v.getLabel()));
+			clusters.put(v, c);
 
 			if (v.getOutbounds().size() == 0)
 				stage.add(v);
 
-			VertexSet c = new VertexSet();
-			int delta = fn.getOffset();
-			for (int i = 0; i < delta; i++)
-				if (ff.inCut(i) && !ff.inCut(i + delta)) {
-					c.add(fn.getVertexByID(i));
-				}
-			clusters.put(v, c);
-
 			// test
-			if (v.getId() == 1)
+			if (v.getId() == 17)
 				Util.writeDOT("fn-debug.txt", ff, fn);
 		});
 
@@ -83,9 +93,13 @@ public class FlowLabeller {
 			} else
 				vn = vtxMap.get(v);
 
+			String debug = "";
+
 			for (Vertex p : clusters.get(v)) {
 				if (p.getInbounds().size() != 0) // Do not stage PIs
 					stage.add(p);
+
+				debug += ", " + p.getId();
 				Vertex tmp = null;
 				if (!vtxMap.containsKey(p)) {
 					tmp = new Vertex();
@@ -96,7 +110,7 @@ public class FlowLabeller {
 
 				edges.add(new Edge(tmp, vn));
 			}
-
+			System.out.println(vn.getId() + ": " + v.getId() + " <= {" + (debug.length() > 1 ? debug.substring(1) : "") + " }");
 			packed.add(v);
 		}
 		g.writeDOT("packed.txt");

@@ -1,3 +1,4 @@
+.model asdfmodel
 .inputs i1 i2 i3 i4 i5
 .outputs o1
 
@@ -8,3 +9,5 @@
 1001- 1
 0-00- 1
 ----0 1
+
+.end
