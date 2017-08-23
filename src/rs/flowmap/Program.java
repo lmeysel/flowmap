@@ -1,12 +1,16 @@
 package rs.flowmap;
 
+import java.util.Iterator;
+
 import rs.blif.BLIF;
 import rs.blifflow.GraphFunction;
 import rs.blifflow.GraphModel;
 import rs.flowmap.graph.Graph;
 import rs.flowmap.graph.Thingmabob;
+import rs.flowmap.graph.Vertex;
 import rs.flowmap.labelling.FlowLabeller;
 import rs.flowmap.test.Util;
+import rs.graphnode.GraphNode.OutputNode;
 
 /**
  * 
@@ -20,25 +24,34 @@ public class Program {
 			System.out.println("No input data given!");
 			return;
 		}
-		// read data
+		
+		System.out.println("read blif...");
 		BLIF dat = new BLIF();
 		dat.modelType = new GraphModel.GraphModelCreator();
 		dat.functionType = new GraphFunction.GraphFunctionCreator();
 		GraphModel rootModel = (GraphModel)dat.addFromFile(args[0]);
 
-		// decompose
+		System.out.println("decompose...");
 		Util.writeDOT("blubb1.txt", rootModel.iterateGraphNodes());
 		rootModel.decompose();
 
+		System.out.println("label...");
 		Graph right = rootModel.getRightModel();
 		Thingmabob cluster = FlowLabeller.label(right, 3);
 		right.writeDOT("graph-debug.txt");
+		
+		System.out.println("compose...");
+		rootModel.composeFrunctionsFromGraph(cluster.getStage());
+		
+		System.out.println("clean..."); // remove unused nodes from decomposition
+		rootModel.cleanFunctions();
 
-		rootModel.printNetwork();
+		//rootModel.printNetwork();
 		//Util.writeDOT("blubb2.txt", rootModel.iterateGraphNodes());
 		// save output
 		if (args.length >= 2) {
-			dat.saveToFolder(args[1]);
+		 System.out.println("save output...");
+		 dat.saveToFolder(args[1]);
 		}
 	}
 }

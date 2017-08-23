@@ -1,10 +1,12 @@
 package rs.blifflow;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.function.Function;
 
 import rs.binfunction.BinFunction;
+import rs.binfunction.Cube;
 import rs.blif.BLIF;
 import rs.blif.Latch;
 import rs.blif.Model;
@@ -15,6 +17,7 @@ import rs.flowmap.graph.Graph;
 import rs.flowmap.graph.Vertex;
 import rs.flowmap.graph.VertexList;
 import rs.graphnode.GraphNode;
+import rs.graphnode.GraphNode.OutputNode;
 
 /**
  * The class GraphModel adds several functions for Graph-Support to the Model-Class.
@@ -96,6 +99,62 @@ public class GraphModel extends Model {
 					edges.add(new Edge(get.apply(gn), v));
 		}
 		return ret;
+	}
+	
+	/**
+	 * composes the logic of functions in current Graph according to a given, composed graph and adds the composed functions to this model
+	 * @param out
+	 * the outbound-vertices of the given graph
+	 */
+	public void composeFrunctionsFromGraph(VertexList out) {
+	 HashMap<Vertex, GraphNode> composedList = new HashMap<Vertex, GraphNode>(); // list of all Vertices, that already have a composed GraphFunction
+     Iterator<Vertex> it = out.iterator();
+     while (it.hasNext()) { // iterate all outbound Vertices of the composed Graph
+      Vertex v = it.next();
+      composeVertex(v, composedList);
+     }
+	}	
+	private GraphNode composeVertex (Vertex v, HashMap<Vertex, GraphNode> composedList) {
+	 // find the output GraphFunction of Vertex
+	 GraphFunction f;
+	 if (v.getHorrible() instanceof GraphFunction) f = (GraphFunction)v.getHorrible();
+	 else if (v.getHorrible() instanceof OutputNode) f = (GraphFunction)v.getHorrible().in().get(0);
+	 else {
+	  composedList.put(v, v.getHorrible());
+	  return v.getHorrible();
+	 }
+	 // get and compose Vertex' inputs
+	 ArrayList<GraphNode> in = new ArrayList<GraphNode>(v.getInbounds().size());
+	 System.out.println("v hat "+v.getPredecessors().size()+" Vorgänger!");
+	 for (int i = 0; i < v.getPredecessors().size(); i++) {
+	  in.add(composedList.get(v.getPredecessors().get(i)));
+	  if (in.get(i) == null) in.set(i, composeVertex(v.getPredecessors().get(i), composedList));
+	 }
+	 // create target merge function and move all links to non-funtion nodes to the new node
+	 GraphFunction mergeFkt = new GraphFunction(in, f.name(), this);
+	 this.functions.add(mergeFkt);
+	 Object[] fout = f.out().toArray();
+	 for (int i = 0; i < fout.length; i++) if (!(fout[i] instanceof BinFunction)) {
+	  int j = ((GraphNode)fout[i]).in().indexOf(f);
+	  if (j == -1) throw new RuntimeException("Linkeage Error: f has an output which doesn't have f as an input!");
+	  ((GraphNode)fout[i]).in().set(j, mergeFkt);
+	 }
+	 // compose logic
+     mergeFkt.on().add(new Cube(mergeFkt.on().width()));
+     mergeFkt.on().add(new Cube(mergeFkt.on().width()));
+     mergeFkt.on().add(new Cube(mergeFkt.on().width()));
+	 return mergeFkt;
+	}
+	
+    /**
+     * Removes all functions, that are not used by any other node
+     */
+	public void cleanFunctions () {
+	 boolean found;
+	 do {
+	  found = false;
+	  for (int i = this.functions.size()-1; i >= 0; i--) if (this.functions.get(i).out().size() == 0) this.functions.remove(i);
+	 } while (found);
 	}
 
 	/**
