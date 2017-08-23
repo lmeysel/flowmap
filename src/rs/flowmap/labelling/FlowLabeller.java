@@ -1,10 +1,6 @@
 package rs.flowmap.labelling;
 
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Vector;
-
-import com.sun.xml.internal.bind.v2.runtime.unmarshaller.XsiNilLoader.Array;
 
 import edu.princeton.cs.algs4.FlowEdge;
 import edu.princeton.cs.algs4.FordFulkerson;
@@ -12,6 +8,7 @@ import rs.flowmap.graph.Edge;
 import rs.flowmap.graph.EdgeList;
 import rs.flowmap.graph.Graph;
 import rs.flowmap.graph.MappedFlowNetwork;
+import rs.flowmap.graph.Thingmabob;
 import rs.flowmap.graph.Vertex;
 import rs.flowmap.graph.VertexList;
 import rs.flowmap.graph.VertexSet;
@@ -35,7 +32,7 @@ public class FlowLabeller {
 	 * @param k
 	 *           The maximum flow.
 	 */
-	public static void label(Graph graph, int k) {
+	public static Thingmabob label(Graph graph, int k) {
 		// assumes the vertices are already sorted by height (done by HeightLabeller)
 		HashMap<Vertex, VertexSet> clusters = new HashMap<>();
 		VertexList stage = new VertexList(); // filled with POs in labelling-phase
@@ -49,9 +46,10 @@ public class FlowLabeller {
 
 			FordFulkerson ff = new FordFulkerson(fn, fn.V() - 2, fn.V() - 1);
 
-			VertexSet c = new VertexSet();
+			VertexSet c = null;
 			int delta = fn.getOffset();
 			if (ff.value() <= k) {
+				c = new VertexSet();
 				v.setLabelAtLeast(v.getLabel());
 
 				for (int i = 0; i < delta; i++)
@@ -60,21 +58,21 @@ public class FlowLabeller {
 					}
 			} else {
 				v.setLabelAtLeast(v.getLabel() + 1);
-				for (int i = 0; i < delta; i++)
-					if (ff.inCut(i) && !ff.inCut(i + delta)) {
-						c.add(fn.getVertexByID(i));
-					}
+				c = new VertexSet(v.getPredecessors());
 			}
 			v.getSuccessors().forEach((Vertex s) -> s.setLabelAtLeast(v.getLabel()));
 			clusters.put(v, c);
 
-			if (v.getOutbounds().size() == 0)
+			if (v.getOutbounds().size() == 0) {
 				stage.add(v);
+			}
 
 			// test
 			if (v.getId() == 17)
 				Util.writeDOT("fn-debug.txt", ff, fn);
 		});
+
+		Thingmabob ret = new Thingmabob(new VertexList(stage), clusters);
 
 		Graph g = new Graph();
 		EdgeList edges = g.getEdges();
@@ -87,7 +85,7 @@ public class FlowLabeller {
 				continue;
 
 			if (!vtxMap.containsKey(v)) {
-				vn = new Vertex();
+				vn = new Vertex(v.getHorrible());
 				vertices.add(vn);
 				vtxMap.put(v, vn);
 			} else
@@ -102,7 +100,7 @@ public class FlowLabeller {
 				debug += ", " + p.getId();
 				Vertex tmp = null;
 				if (!vtxMap.containsKey(p)) {
-					tmp = new Vertex();
+					tmp = new Vertex(p.getHorrible());
 					vertices.add(tmp);
 					vtxMap.put(p, tmp);
 				} else
@@ -114,6 +112,8 @@ public class FlowLabeller {
 			packed.add(v);
 		}
 		g.writeDOT("packed.txt");
+
+		return ret;
 	}
 
 	/**

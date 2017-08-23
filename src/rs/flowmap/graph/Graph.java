@@ -54,8 +54,8 @@ public class Graph {
 				if (!level.containsKey(v.getHeight()))
 					level.put(v.getHeight(), new VertexList());
 				level.get(v.getHeight()).add(v);
-				//wtr.write("n" + v.getId() + " [label=<" + v.getId() + " | " + v.getHeight() + ">]" + br);
-				wtr.write("n" + v.getId() + " [label=<" + v.getId() + " | " + v.getLabel() + ">]" + br);
+				//wtr.write("n" + v.getId() + " [label=<" + v.getId() + " | " + v.getLabel() + ">]" + br);
+				wtr.write("n" + v.getId() + " [label=<" + v.getId() + " | " + (v.getHorrible() != null ? v.getHorrible().name() : "") + ">]" + br);
 			}
 
 			// define ranks

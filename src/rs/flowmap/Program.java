@@ -4,6 +4,7 @@ import rs.blif.BLIF;
 import rs.blifflow.GraphFunction;
 import rs.blifflow.GraphModel;
 import rs.flowmap.graph.Graph;
+import rs.flowmap.graph.Thingmabob;
 import rs.flowmap.labelling.FlowLabeller;
 import rs.flowmap.test.Util;
 
@@ -24,13 +25,13 @@ public class Program {
 		dat.modelType = new GraphModel.GraphModelCreator();
 		dat.functionType = new GraphFunction.GraphFunctionCreator();
 		GraphModel rootModel = (GraphModel)dat.addFromFile(args[0]);
-		
+
 		// decompose
 		Util.writeDOT("blubb1.txt", rootModel.iterateGraphNodes());
 		rootModel.decompose();
 
 		Graph right = rootModel.getRightModel();
-		FlowLabeller.label(right, 3);
+		Thingmabob cluster = FlowLabeller.label(right, 3);
 		right.writeDOT("graph-debug.txt");
 
 		rootModel.printNetwork();
