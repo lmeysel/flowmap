@@ -17,9 +17,7 @@ import rs.flowmap.graph.VertexList;
 import rs.graphnode.GraphNode;
 
 /**
- * The class GraphModel does not simply store different functions but it also links the functions by
- * their variable names and adds the ability of creating a FlowMap that is linked with the
- * functions.
+ * The class GraphModel adds several functions for Graph-Support to the Model-Class.
  * 
  * @author Mitja Stachowiak
  *

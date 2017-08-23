@@ -100,7 +100,7 @@ public class Set extends ArrayList<Cube> {
    if (!s.equals("")) s += " + ";
    int dcCnt = 0;
    for (int j = 0; j < this.width; j++) {
-    if (names != null && names.get(j) != null) v = names.get(j).name();
+    if (names != null && names.size() >= this.width && names.get(j) != null) v = names.get(j).name();
     else v = ""+j;
     switch (((Cube)this.get(i)).getVar(j)) {
      case BinFunction.INV :

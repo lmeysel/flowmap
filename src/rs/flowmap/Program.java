@@ -23,8 +23,8 @@ public class Program {
 		BLIF dat = new BLIF();
 		dat.modelType = new GraphModel.GraphModelCreator();
 		dat.functionType = new GraphFunction.GraphFunctionCreator();
-
 		GraphModel rootModel = (GraphModel)dat.addFromFile(args[0]);
+		
 		// decompose
 		Util.writeDOT("blubb1.txt", rootModel.iterateGraphNodes());
 		rootModel.decompose();
@@ -33,7 +33,7 @@ public class Program {
 		FlowLabeller.label(right, 3);
 		right.writeDOT("graph-debug.txt");
 
-		//rootModel.printNetwork();
+		rootModel.printNetwork();
 		//Util.writeDOT("blubb2.txt", rootModel.iterateGraphNodes());
 		// save output
 		if (args.length >= 2) {
