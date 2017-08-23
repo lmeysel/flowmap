@@ -89,6 +89,7 @@ public class GraphModel extends Model {
 		while (it.hasNext()) {
 			GraphNode nde = it.next();
 			Vertex v = get.apply(nde);
+			
 			vertices.add(v);
 			if (nde.in() != null)
 				for (GraphNode gn : nde.in())

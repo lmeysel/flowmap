@@ -19,8 +19,6 @@ public class SimpleGraph extends Graph {
 	 * Creates a new object from the {@see SimpleGraph} class.
 	 */
 	public SimpleGraph() {
-		VertexList v = super.vertices;
-		EdgeList e = super.edges;
 	}
 
 	/**
@@ -33,7 +31,7 @@ public class SimpleGraph extends Graph {
 		net.addEdge(new FlowEdge(1, 2, 3));
 		net.addEdge(new FlowEdge(2, 3, 6));
 		net.addEdge(new FlowEdge(1, 3, 1));
-		
+
 		FordFulkerson ff = new FordFulkerson(net, 0, 3);
 		System.out.println(ff.value());
 	}
