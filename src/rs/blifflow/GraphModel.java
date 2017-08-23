@@ -74,7 +74,7 @@ public class GraphModel extends Model {
 		EdgeList edges = ret.getEdges();
 		VertexList vertices = ret.getVertices();
 
-		HashMap<GraphNode, Vertex> map = new HashMap<>();
+		final HashMap<GraphNode, Vertex> map = new HashMap<>();
 		Function<GraphNode, Vertex> get = (GraphNode g) -> {
 			if (map.containsKey(g))
 				return map.get(g);

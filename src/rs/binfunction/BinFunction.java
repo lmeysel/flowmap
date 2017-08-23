@@ -160,7 +160,7 @@ public class BinFunction implements GraphNode {
   return r;
  }
  
- public boolean isEquivalent(BinFunction foreign) {
+ public boolean isEquivalent(final BinFunction foreign) {
   if (this.numInputs() != foreign.numInputs()) return false;
   // map input names
   int[] map = new int[this.numInputs()];
@@ -193,7 +193,7 @@ public class BinFunction implements GraphNode {
    })) return false;
   }
   // check weather each cube of foreign.on is covered by this.on+dc
-  BinFunction _this = this;
+  final BinFunction _this = this;
   for (int i = 0; i < foreign.on.size(); i++) {
    Cube c = foreign.on().get(i);
    Cube m;
