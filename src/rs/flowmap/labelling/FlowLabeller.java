@@ -49,9 +49,10 @@ public class FlowLabeller {
 
 			FordFulkerson ff = new FordFulkerson(fn, fn.V() - 2, fn.V() - 1);
 
-			VertexSet c = new VertexSet();
+			VertexSet c = null;
 			int delta = fn.getOffset();
 			if (ff.value() <= k) {
+				c = new VertexSet();
 				v.setLabelAtLeast(v.getLabel());
 
 				for (int i = 0; i < delta; i++)
@@ -60,10 +61,7 @@ public class FlowLabeller {
 					}
 			} else {
 				v.setLabelAtLeast(v.getLabel() + 1);
-				for (int i = 0; i < delta; i++)
-					if (ff.inCut(i) && !ff.inCut(i + delta)) {
-						c.add(fn.getVertexByID(i));
-					}
+				c = new VertexSet(v.getPredecessors());
 			}
 			v.getSuccessors().forEach((Vertex s) -> s.setLabelAtLeast(v.getLabel()));
 			clusters.put(v, c);
