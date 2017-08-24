@@ -33,17 +33,17 @@ public class Program {
 
 		System.out.println("label...");
 		Graph right = rootModel.getRightModel();
-		Thingmabob cluster = FlowLabeller.label(right, 3);
+		Thingmabob cluster = FlowLabeller.label(right, 5);
 		right.writeDOT("graph-debug.txt");
 		
 		System.out.println("compose...");
-		rootModel.composeFrunctionsFromGraph(cluster.getStage());
+		rootModel.composeFrunctionsFromGraph(cluster);
 		
 		System.out.println("clean..."); // remove unused nodes from decomposition
 		rootModel.cleanFunctions();
 
 		//rootModel.printNetwork();
-		//Util.writeDOT("blubb2.txt", rootModel.iterateGraphNodes());
+		//Util.writeDOT("blubb2.txt", rootModel.iterateGraphNodes());+
 
 		if (args.length >= 2) {
 		 System.out.println("save output...");

@@ -15,8 +15,10 @@ import rs.blif.SubCircuit;
 import rs.flowmap.graph.Edge;
 import rs.flowmap.graph.EdgeList;
 import rs.flowmap.graph.Graph;
+import rs.flowmap.graph.Thingmabob;
 import rs.flowmap.graph.Vertex;
 import rs.flowmap.graph.VertexList;
+import rs.flowmap.graph.VertexSet;
 import rs.graphnode.GraphNode;
 import rs.graphnode.GraphNode.OutputNode;
 
@@ -109,12 +111,13 @@ public class GraphModel extends Model {
 	 * @param out
 	 * the outbound-vertices of the given graph
 	 */
-	public void composeFrunctionsFromGraph(VertexList out) {
+	public void composeFrunctionsFromGraph(Thingmabob cluster) {
 	 HashMap<Vertex, GraphNode> composedList = new HashMap<Vertex, GraphNode>(); // list of all Vertices, that already have a composed GraphFunction
-     Iterator<Vertex> it = out.iterator();
+     VertexList out = cluster.getStage();
+	 Iterator<Vertex> it = out.iterator();
      while (it.hasNext()) { // iterate all outbound Vertices of the composed Graph
       Vertex v = it.next();
-      composeVertex(v, composedList);
+      composeVertex(v, composedList, cluster);
      }
 	}
 	
@@ -124,10 +127,11 @@ public class GraphModel extends Model {
 	 * The Vertex, that's predecessor-subtree should be composed.
 	 * @param composedList
 	 * A list, that stores for each processed Vertex it's related, composed function
+	 * @param cluster
 	 * @return
 	 * The composed Node, already inserted into this Model's functions; can be null in some seldom cases (Virtual OutputNode is target of composition but has no sub-tree to be composed).
 	 */
-	private GraphNode composeVertex (Vertex v, HashMap<Vertex, GraphNode> composedList) {
+	private GraphNode composeVertex (Vertex v, HashMap<Vertex, GraphNode> composedList, Thingmabob cluster) {
 	 // find the output GraphFunction of Vertex
 	 GraphFunction f;
 	 if (v.getHorrible() instanceof GraphFunction) f = (GraphFunction)v.getHorrible();
@@ -155,11 +159,12 @@ public class GraphModel extends Model {
       }
      }*/
      // get and compose Vertex' inputs
-	 ArrayList<GraphNode> in = new ArrayList<GraphNode>(v.getPredecessors().size());
-	 
-	 for (int i = 0; i < v.getPredecessors().size(); i++) {
-	  in.add(composedList.get(v.getPredecessors().get(i)));
-	  if (in.get(i) == null) in.set(i, composeVertex(v.getPredecessors().get(i), composedList));
+	 Object[] vin = cluster.getCluster().get(v).toArray();
+	 ArrayList<GraphNode> in = new ArrayList<GraphNode>(vin.length);
+	 for (int i = 0; i < vin.length; i++) {
+	  GraphNode nn = composedList.get(vin[i]);
+	  if (nn == null) nn = composeVertex((Vertex)vin[i], composedList, cluster);
+      in.add(nn);
 	 }
 	 // create target merge function and move all links to non-function nodes to the new node
 	 GraphFunction mergeFkt = new GraphFunction(in, f.name(), this);
@@ -177,7 +182,7 @@ public class GraphModel extends Model {
 	  Cube c = new Cube(sin.width()); // init with don't care
 	  c.setVar(i, BinFunction.ONE);
 	  sin.add(c); // sin is now a set, that represents only the i-th input of mergeFkt
-	  GraphNode fp = v.getPredecessors().get(i).getHorrible();
+	  GraphNode fp = ((Vertex)vin[i]).getHorrible();
 	  if (fp == f) return null; // Output function and it's virtual OutputNode are still in the composed tree together!
 	  composedSets.put(fp, sin); // link the uncomposed funtion (that is in the decomposed tree) with the related on-set
 	 }
