@@ -126,6 +126,60 @@ public class Set extends ArrayList<Cube> {
   return s;
  }
  
+ /**
+  * Basic complementation algorithm:
+  * recursively adds those parts of c to off, that have no intersection with any of the given sets notOff.
+  * @Hint: Start c with a tautology.
+  */
+ static void addToOffset(IntersectFreeSet off, final Set[] notOff, Cube c) {
+  for (int n = 0; n < notOff.length; n++) for (int i = 0; i < notOff[n].size(); i++) {
+   Cube a = c.and(notOff[n].get(i));
+   if (!a.isValid()) continue; // c has no intersection with notOff[n][i]
+   if (a.equals(c)) return; // c is completely covered by one existing notOff[n][i]
+   for (int j = 0; j < c.width; j++) if (c.getVar(j) == BinFunction.DC && a.getVar(j) != BinFunction.DC) {
+    // split into smaller cubes and try again...
+    Cube c1 = c.clone();
+    Cube c2 = c.clone();
+    c1.setVar(j, BinFunction.ONE);
+    c2.setVar(j, BinFunction.ZERO);
+    addToOffset(off, notOff, c1);
+    addToOffset(off, notOff, c2);
+    return;
+   }
+  }
+  // c has no intersects with any of the notOff-sets
+  off.forceAdd(c); // after the this algorithm, off will automatically be intersect-free (no further check required)
+ }
+
+ /**
+  * Computes the complement of this set
+  * @return
+  * the complement-set
+  */
+ public Set not() {
+  IntersectFreeSet off = new IntersectFreeSet(this.width);
+  Cube c = new Cube(this.width); // initialized with DCs
+  Set[] notOff = new Set[1];
+  notOff[0] = this;
+  addToOffset(off, notOff, c);
+  return off;
+ }
+
+ /**
+  * Computes the and-conjunction of this and the foreign set by DeMorgan's multiplication.
+  * @param foreign
+  * @return
+  * The resulting set.
+  */
+ public Set and(Set foreign) {
+  Set a = new Set(this.width);
+  for (int i = 0; i < this.size(); i++) for (int j = 0; j < foreign.size(); j++) {
+   Cube ca = this.get(i).and(foreign.get(j));
+   if (ca.isValid()) a.add(ca);
+  }
+  return a;
+ }
+ 
  
  
  

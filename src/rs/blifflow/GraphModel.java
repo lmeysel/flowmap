@@ -7,6 +7,7 @@ import java.util.function.Function;
 
 import rs.binfunction.BinFunction;
 import rs.binfunction.Cube;
+import rs.binfunction.Set;
 import rs.blif.BLIF;
 import rs.blif.Latch;
 import rs.blif.Model;
@@ -32,13 +33,16 @@ public class GraphModel extends Model {
 	}
 
 	/**
-	 * splitts all BinFunctions of this model into 2-input-LUTs
+	 * splitts all BinFunctions of this model into 1 and 2-input-LUTs
 	 */
 	public void decompose() {
 		for (int i = this.functions.size() - 1; i >= 0; i--)
 			((GraphFunction)this.functions.get(i)).decompose();
 	}
 
+	/**
+	 * Prints the Blif-Network.
+	 */
 	public void printNetwork() {
 		Iterator<GraphNode> it = this.iterateGraphNodes();
 		while (it.hasNext()) {
@@ -69,7 +73,6 @@ public class GraphModel extends Model {
 
 	/**
 	 * Gets the Graph in the right model.
-	 * 
 	 * @return A graph object containing the right model.
 	 */
 	public Graph getRightModel() {
@@ -113,7 +116,17 @@ public class GraphModel extends Model {
       Vertex v = it.next();
       composeVertex(v, composedList);
      }
-	}	
+	}
+	
+	/**
+	 * Recursively composes the subtree before v.
+	 * @param v
+	 * The Vertex, that's predecessor-subtree should be composed.
+	 * @param composedList
+	 * A list, that stores for each processed Vertex it's related, composed function
+	 * @return
+	 * The composed Node, already inserted into this Model's functions; can be null in some seldom cases (Virtual OutputNode is target of composition but has no sub-tree to be composed).
+	 */
 	private GraphNode composeVertex (Vertex v, HashMap<Vertex, GraphNode> composedList) {
 	 // find the output GraphFunction of Vertex
 	 GraphFunction f;
@@ -123,14 +136,32 @@ public class GraphModel extends Model {
 	  composedList.put(v, v.getHorrible());
 	  return v.getHorrible();
 	 }
-	 // get and compose Vertex' inputs
-	 ArrayList<GraphNode> in = new ArrayList<GraphNode>(v.getInbounds().size());
+	 /*// planlos einige Vorgängerknoten in v hineinziehen
 	 System.out.println("v hat "+v.getPredecessors().size()+" Vorgänger!");
+	 for (int k = v.getPredecessors().size()-1; k >= 0; k--) if (v.getPredecessors().get(k).getHorrible() instanceof GraphFunction) {
+	  Vertex rf = v.getPredecessors().remove(k);
+	  for (int i = 0; i < rf.getPredecessors().size(); i++) {
+	   boolean found = false;
+	   for (int j = 0; j < v.getPredecessors().size(); j++) if (v.getPredecessors().get(j) == rf.getPredecessors().get(i)) { found = true; break; }
+	   if (!found) v.getPredecessors().add(rf.getPredecessors().get(i));
+	  }
+	 }
+	 if (v.getPredecessors().get(0).getHorrible() instanceof GraphFunction) {
+      Vertex rf = v.getPredecessors().remove(0);
+      for (int i = 0; i < rf.getPredecessors().size(); i++) {
+       boolean found = false;
+       for (int j = 0; j < v.getPredecessors().size(); j++) if (v.getPredecessors().get(j) == rf.getPredecessors().get(i)) { found = true; break; }
+       if (!found) v.getPredecessors().add(rf.getPredecessors().get(i));
+      }
+     }*/
+     // get and compose Vertex' inputs
+	 ArrayList<GraphNode> in = new ArrayList<GraphNode>(v.getPredecessors().size());
+	 
 	 for (int i = 0; i < v.getPredecessors().size(); i++) {
 	  in.add(composedList.get(v.getPredecessors().get(i)));
 	  if (in.get(i) == null) in.set(i, composeVertex(v.getPredecessors().get(i), composedList));
 	 }
-	 // create target merge function and move all links to non-funtion nodes to the new node
+	 // create target merge function and move all links to non-function nodes to the new node
 	 GraphFunction mergeFkt = new GraphFunction(in, f.name(), this);
 	 this.functions.add(mergeFkt);
 	 Object[] fout = f.out().toArray();
@@ -140,10 +171,65 @@ public class GraphModel extends Model {
 	  ((GraphNode)fout[i]).in().set(j, mergeFkt);
 	 }
 	 // compose logic
-     mergeFkt.on().add(new Cube(mergeFkt.on().width()));
-     mergeFkt.on().add(new Cube(mergeFkt.on().width()));
-     mergeFkt.on().add(new Cube(mergeFkt.on().width()));
+	 HashMap<GraphNode, Set> composedSets = new HashMap<GraphNode, Set>();
+	 for (int i = 0; i < mergeFkt.in().size(); i++) {
+	  Set sin = new Set(mergeFkt.numInputs());
+	  Cube c = new Cube(sin.width()); // init with don't care
+	  c.setVar(i, BinFunction.ONE);
+	  sin.add(c); // sin is now a set, that represents only the i-th input of mergeFkt
+	  GraphNode fp = v.getPredecessors().get(i).getHorrible();
+	  if (fp == f) return null; // Output function and it's virtual OutputNode are still in the composed tree together!
+	  composedSets.put(fp, sin); // link the uncomposed funtion (that is in the decomposed tree) with the related on-set
+	 }
+     Set on = composeSet(f, mergeFkt.in().size(), composedSets);
+     mergeFkt.on().addAll(on);
 	 return mergeFkt;
+	}
+	
+	/**
+     *
+	 * @param fkt
+	 * The decomposed function, that should be replaced by the composed one.
+	 * @param nin
+	 * Numer of inputs of the composed function
+	 * @param composedSets
+	 * A list, that stores for each decomposed function the related, composed on-set. Put in the corner of the subtree for primary call.
+	 * @return
+	 */
+	private Set composeSet (GraphFunction fkt, int nin, HashMap<GraphNode, Set> composedSets) {
+	 Set[] sin = new Set[fkt.numInputs()];
+	 Set[] sinv = new Set[fkt.numInputs()]; // complemented sets (compute on demand)
+	 // get all input sets, compose them, if not available
+	 for (int i = 0; i < fkt.numInputs(); i++) {
+	  sin[i] = composedSets.get(fkt.in().get(i));
+	  if (sin[i] == null) {
+	   if (!(fkt.in().get(i) instanceof GraphFunction)) throw new RuntimeException("Can only compose Functions! Add all inputs to composedSets before calling composeSet.");
+	   sin[i] = composeSet((GraphFunction)fkt.in().get(i), nin, composedSets);
+	  }
+	 }
+	 // do the and-conjunction (not-complementation included)
+	 Set[] sand = new Set[fkt.on().size()];
+	 for (int i = 0; i < fkt.on().size(); i++) {
+	  sand[i] = new Set(nin);
+	  sand[i].add(new Cube(nin)); // sand[i] here is a tautology (always 1)
+      Cube c = fkt.on().get(i);	  
+	  for (int j = 0; j < c.width; j++) {
+	   if (c.getVar(j) == BinFunction.DC) continue;
+	   Set s;
+	   if (c.getVar(j) == BinFunction.ONE) s = sin[j];
+	   else {
+	    if (sinv[j] == null) sinv[j] = sin[j].not(); // compute complemented set on demand
+	    s = sinv[j];
+	   }
+	   sand[i] = sand[i].and(s); // compute the and-conjunction of sand[i] and s
+	  }
+	 }
+     // do the or-disjunction
+	 Set comp = new Set(nin); // comp here is always zero
+	 for (int i = 0; i < sand.length; i++) comp.addAll(sand[i]);
+	 // store composed set to prevent re-computation
+	 composedSets.put(fkt, comp);
+	 return comp;
 	}
 	
     /**
@@ -153,7 +239,10 @@ public class GraphModel extends Model {
 	 boolean found;
 	 do {
 	  found = false;
-	  for (int i = this.functions.size()-1; i >= 0; i--) if (this.functions.get(i).out().size() == 0) this.functions.remove(i);
+	  for (int i = this.functions.size()-1; i >= 0; i--) if (this.functions.get(i).out().size() == 0) {
+	   this.functions.remove(i);
+	   found = true;
+	  }
 	 } while (found);
 	}
 

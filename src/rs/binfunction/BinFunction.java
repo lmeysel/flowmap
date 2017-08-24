@@ -1,20 +1,19 @@
 package rs.binfunction;
 
-import java.util.HashSet;
 import java.util.List;
 
 import rs.graphnode.GraphNode;
 
 /**
- * BinFunction describes a logic function, that has an onset and a don't-care set.
+ * BinFunction describes a logic function, that has an on-set and a don't-care set.
  * @author Mitja Stachowiak, Ludwig Meysel
  */
 public class BinFunction implements GraphNode {
  protected Set on;    public Set on () { return this.on; }
  protected Set dc;    public Set dc () { return this.dc; }
  public int numInputs () { return this.on.width(); }
- private final SelfLinkingList in;
- private final java.util.Set<GraphNode> out = new HashSet<GraphNode>();
+ private final SelfLinkingArrayList in;
+ private final java.util.Set<GraphNode> out = new ReadonlyHashSet();
  protected String name = null;
  // implementation of GraphNode
  @Override public String name () { return this.name; }
@@ -35,7 +34,7 @@ public class BinFunction implements GraphNode {
  public BinFunction (int numInputs) {
   this.on = new Set(numInputs);
   this.dc = new Set(numInputs);
-  this.in = new SelfLinkingList(this, numInputs);
+  this.in = new SelfLinkingArrayList(this, numInputs);
   for (int i = 0; i < numInputs; i++) this.in.add(null);
  }
  public BinFunction (List<GraphNode> in, String name) {
@@ -53,44 +52,11 @@ public class BinFunction implements GraphNode {
  public IntersectFreeSet computeOff () {
   IntersectFreeSet off = new IntersectFreeSet(numInputs());
   Cube c = new Cube(numInputs()); // initialized with DCs
-  addToOffset(off, c);
+  Set[] onDc = new Set[2];
+  onDc[0] = this.on;
+  onDc[1] = this.dc;
+  Set.addToOffset(off, onDc, c);
   return off;
- }
- private void addToOffset(IntersectFreeSet off, Cube c) {
-  // regard on-set
-  for (int i = 0; i < this.on.size(); i++) {
-   Cube a = c.and(this.on.get(i));
-   if (!a.isValid()) continue; // c has no intersection with on[i]
-   if (a.equals(c)) return; // c is completely covered by one existing on[i]
-   for (int j = 0; j < c.width; j++) if (c.getVar(j) == BinFunction.DC && a.getVar(j) != BinFunction.DC) {
-    // split into smaller cubes and try again...
-    Cube c1 = c.clone();
-    Cube c2 = c.clone();
-    c1.setVar(j, BinFunction.ONE);
-    c2.setVar(j, BinFunction.ZERO);
-    addToOffset(off, c1);
-    addToOffset(off, c2);
-    return;
-   }
-  }
-  // regard dc-set
-  for (int i = 0; i < this.dc.size(); i++) {
-   Cube a = c.and(this.dc.get(i));
-   if (!a.isValid()) continue; // c has no intersection with dc[i]
-   if (a.equals(c)) return; // c is completely covered by one existing dc[i]
-   for (int j = 0; j < c.width; j++) if (c.getVar(j) == BinFunction.DC && a.getVar(j) != BinFunction.DC) {
-    // split into smaller cubes and try again...
-    Cube c1 = c.clone();
-    Cube c2 = c.clone();
-    c1.setVar(j, BinFunction.ONE);
-    c2.setVar(j, BinFunction.ZERO);
-    addToOffset(off, c1);
-    addToOffset(off, c2);
-    return;
-   }
-  }
-  // c has no intersects with on- or dc-set
-  off.forceAdd(c); // after the this algorithm, off will automatically be intersect-free (no further check required)
  }
  
  /**

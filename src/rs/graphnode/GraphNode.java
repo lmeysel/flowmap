@@ -8,16 +8,20 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Set;
 
+/**
+ * This is the basic interface for Blif-Graph Objects
+ * @author Mitja Stachowiak
+ */
 public interface GraphNode extends FreeableNode {
  public String name ();
- public List<GraphNode> in (); // the inputs are a Self-Linking-List. Adding a new GraphNode to in will also create a link in the new node's out-Table.
- public Set<GraphNode> out ();
+ public List<GraphNode> in (); // the inputs are a Self-Linking (SelfLinkingArrayList or OneItemList). Adding a new GraphNode to in will also create a link in the new node's out-Table.
+ public Set<GraphNode> out (); // the outputs (ReadonlyHashSet) are managed by the inputs. Only the SelfLinkingArrayList or OneItemList are allowed to modify the outputs.
  public void free ();
  
  
  public static class UnknownNode implements GraphNode {
   private final String name;
-  private final Set<GraphNode> out = new HashSet<GraphNode>();
+  private final Set<GraphNode> out = new ReadonlyHashSet();
   public UnknownNode (String name) {
    this.name = name;
   }
@@ -30,7 +34,7 @@ public interface GraphNode extends FreeableNode {
  
  public static class InputNode implements GraphNode {
   private final String name;
-  private final Set<GraphNode> out = new HashSet<GraphNode>();
+  private final Set<GraphNode> out = new ReadonlyHashSet();
   public InputNode (String name) {
    this.name = name;
   }
@@ -55,41 +59,41 @@ public interface GraphNode extends FreeableNode {
  
  
  
- public static class SelfLinkingList extends ArrayList<GraphNode> {
+ public static class SelfLinkingArrayList extends ArrayList<GraphNode> {
   private static final long serialVersionUID = 2614432379282826237L;
   private final GraphNode parent;
-  public SelfLinkingList (GraphNode parent, int size) {
+  public SelfLinkingArrayList (GraphNode parent, int size) {
    super(size);
    this.parent = parent;
   }
-  public SelfLinkingList (GraphNode parent) { this(parent, 0); }
+  public SelfLinkingArrayList (GraphNode parent) { this(parent, 0); }
   @Override public boolean add(GraphNode n) {
-   if (n != null) n.out().add(parent);
+   if (n != null) ((ReadonlyHashSet)n.out())._add(parent);
    return super.add(n);
   }
   @Override public void add(int i, GraphNode n) {
-   if (n != null) n.out().add(parent);
+   if (n != null) ((ReadonlyHashSet)n.out())._add(parent);
    super.add(i, n);
   }
   @Override public boolean remove (Object n) {
    boolean b = super.remove(n);
-   if (b && n != null) ((GraphNode)n).out().remove(parent);
+   if (b && n != null) ((ReadonlyHashSet)((GraphNode)n).out())._remove(parent);
    return b;
   }
   @Override public GraphNode remove (int i) {
    GraphNode n = super.remove(i);
-   if (n != null) n.out().remove(parent);
+   if (n != null) ((ReadonlyHashSet)n.out())._remove(parent);
    return n;
   }
   @Override public GraphNode set (int i, GraphNode n) {
    GraphNode p = super.set(i, n);
-   if (p != null) p.out().remove(parent);
-   if (n != null) n.out().add(parent);
+   if (p != null) ((ReadonlyHashSet)p.out())._remove(parent);
+   if (n != null) ((ReadonlyHashSet)n.out())._add(parent);
    return p;
   }
   @Override public void clear () {
    for (int i = 0; i < this.size(); i++) {
-    this.get(i).out().remove(parent);
+    ((ReadonlyHashSet)this.get(i).out())._remove(parent);
     super.set(i, null);
    }
    super.clear();
@@ -162,9 +166,9 @@ public interface GraphNode extends FreeableNode {
   @Override public GraphNode set(int arg0, GraphNode arg1) {
    if (arg0 == 0) {
     GraphNode p = item;
-    if (p != null) p.out().remove(parent);
+    if (p != null) ((ReadonlyHashSet)p.out())._remove(parent);
     item = arg1;
-    if (item != null) item.out().add(parent);
+    if (item != null) ((ReadonlyHashSet)item.out())._add(parent);
     return p;
    }
    return null;
@@ -181,5 +185,20 @@ public interface GraphNode extends FreeableNode {
   }
   @SuppressWarnings("unchecked")
   @Override public Object[] toArray(Object[] arg0) { Object[] a = new Object[1]; a[0] = item; return a; }
+ }
+ 
+ 
+ public static class ReadonlyHashSet extends HashSet<GraphNode> {
+  private static final long serialVersionUID = -1265904781158449279L;
+  @Override public void clear () { throw new RuntimeException("Output-set cannot be modified! Modify sucessor's inputs instead."); }
+  @Override public boolean remove (Object o) { throw new RuntimeException("Output-set cannot be modified! Modify sucessor's inputs instead."); }
+  @Override public boolean add (GraphNode o) { throw new RuntimeException("Output-set cannot be modified! Modify sucessor's inputs instead."); }
+  @Override public boolean addAll (Collection<? extends GraphNode> c) { throw new RuntimeException("Output-set cannot be modified! Modify sucessor's inputs instead."); }
+  @Override public boolean removeAll (Collection<?> c) { throw new RuntimeException("Output-set cannot be modified! Modify sucessor's inputs instead."); }
+  void _clear () { super.clear(); }
+  boolean _remove (Object o) { return super.remove(o); }
+  boolean _add (GraphNode o) { return super.add(o); }
+  boolean _addAll (Collection<? extends GraphNode> c) { return super.addAll(c); }
+  boolean _removeAll (Collection<?> c) { return super.removeAll(c); }
  }
 }

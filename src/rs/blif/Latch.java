@@ -1,6 +1,5 @@
 package rs.blif;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -8,7 +7,7 @@ import rs.graphnode.GraphNode;
 
 public class Latch implements GraphNode {
  private GraphNode.OneItemList in = new GraphNode.OneItemList(this);
- private Set<GraphNode> out = new HashSet<GraphNode>();
+ private Set<GraphNode> out = new ReadonlyHashSet();
  public GraphNode input () { return in.get(0); }
  public void input (GraphNode n) { in.set(0, n); }
  public String output;

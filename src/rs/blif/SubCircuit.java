@@ -6,6 +6,13 @@ import java.util.List;
 import rs.graphnode.FreeableNode;
 import rs.graphnode.GraphNode;
 
+/**
+ * This class represents a sub-circuit. In the Blif-Graph, each node can have multiple inputs and one output, that can be used by several other nodes.
+ * A Sub-Circuit can have multiple outputs and is therefore not representable as a BLIF-Graph object. Instead all sub-circuit's inputs are
+ * ToSubcircuit-nodes, that inherit from OutputNode and all outputs are FromSubcircuit-nodes, that inherit from InputNode. Therefore the sub-circuit
+ * appears as several inputs and outputs of the BLIF-Network.
+ * @author Mitja Stachowiak
+ */
 public class SubCircuit implements FreeableNode {
  public final Model model;
  public final Model subModel;
