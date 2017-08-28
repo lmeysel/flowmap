@@ -14,6 +14,7 @@
 \usepackage{subfigure} 	
 \usepackage{float}
 \usepackage{amsmath}
+\usepackage{hyperref}
 
 \newcommand\todo[1]{\textcolor{red}{#1}}
 \newcommand\code[1]{\texttt{#1}}
@@ -24,7 +25,7 @@
 %\newlength{\longtablewidth}
 %\setlength{\longtablewidth}{0.675\linewidth}
 
-\title{Mini-task report: Flow Map Lut-Packing Algorithm}
+\title{Mini-task report: FlowMap Lut-Packing Algorithm}
 \subtitle{Ludwig Meysel, Mitja Stachowiak}
 
 \begin{document}
@@ -39,6 +40,7 @@ The task was to implement a simple version of the Flow Map algorithm which is us
 \chapter{BLIF Parser}
 The Parser of the Espresso-project is used again and developed further; especially the functions are now stored in a graph-structure. It is still ready-to-use for the Espresso-package. The parser now also supports latches and sub-circuits in a basically way that enables it to hold this information in memory and save it back to file.
 
+\include{labelling}
 
 \chapter{Conclusion}
 Niemand interessiert die Conclusion   :P
