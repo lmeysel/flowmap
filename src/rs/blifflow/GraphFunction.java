@@ -10,13 +10,9 @@ import rs.graphnode.GraphNode;
 public class GraphFunction extends BinFunction {
  private boolean          decomposed = false;
  private final GraphModel parent;
- private int              height     = 0;
+ private int              height     = 0;    public int height() { return this.height; }
+ public static boolean    reUseExistingFunctions = true;
 
- public int height() {
-  return this.height;
- }
-
- public static boolean reUseExistingFunctions = true;
 
  public GraphFunction(int numInputs, GraphModel parent) {
   super(numInputs);
@@ -28,18 +24,18 @@ public class GraphFunction extends BinFunction {
   this.parent = parent;
  }
 
+ /**
+  * Replaces this function with a tree of two-input functions:
+  * Splits this function into two-input boolean functions. The successor-nodes of this are linked to the
+  * output of the two-input tree and this function gets removed from the model.
+  */
  public void decompose() {
-  if (decomposed)
-   return;
-  int nameAdd = 1; // TODO: Find a way to be sure, an other node in the model
-                   // doesn't have such a generated name!
+  if (decomposed) return;
+  int nameAdd = 1;
   decomposed = true;
   this.dc.clear();
-  // be sure all previous functions were decomposed for dealing with the correct
-  // heights in the following
-  for (int i = 0; i < in().size(); i++)
-   if (in().get(i) instanceof GraphFunction)
-    ((GraphFunction) in().get(i)).decompose();
+  // be sure all previous functions were decomposed for dealing with the correct heights in the following
+  for (int i = 0; i < in().size(); i++) if (in().get(i) instanceof GraphFunction) ((GraphFunction) in().get(i)).decompose();
   // search and-tree for decomposable functions
   GraphNode[] andTree = new GraphNode[this.on.size()];
   for (int i = 0; i < this.on.size(); i++) {
@@ -59,23 +55,19 @@ public class GraphFunction extends BinFunction {
     }
    do {
     int[] j = twoLowestHeights(fktIn);
-    if (j[1] != -1) { // c depends at least of two inputs and j[0], j[1] are the
-                      // inputs with the lowest height
+    if (j[1] != -1) { // c depends at least of two inputs and j[0], j[1] are the inputs with the lowest height
      // create an two-input-and-function, that replaces j[0], j[1]
      GraphFunction and = new GraphFunction(2, parent);
      and.in().set(0, (GraphNode) fktIn[j[0]]);
      and.in().set(1, (GraphNode) fktIn[j[1]]);
      Cube ca = new Cube(2);
-     if (negatedIn[j[0]])
-      ca.setVar(0, ZERO);
-     else
-      ca.setVar(0, ONE);
-     if (negatedIn[j[1]])
-      ca.setVar(1, ZERO);
-     else
-      ca.setVar(1, ONE);
+     if (negatedIn[j[0]]) ca.setVar(0, ZERO);
+     else ca.setVar(0, ONE);
+     if (negatedIn[j[1]]) ca.setVar(1, ZERO);
+     else ca.setVar(1, ONE);
      and.on().add(ca);
-     and.name = this.name + "_" + nameAdd++;
+     nameAdd = nextName(this.name + "_", nameAdd);
+     and.name = this.name + "_" + nameAdd;
      // check, weather an equivalent and-function already exists...
      boolean b = true;
      if (reUseExistingFunctions) {
@@ -93,17 +85,16 @@ public class GraphFunction extends BinFunction {
      negatedIn[j[0]] = false;
      negatedIn[j[1]] = false;
      and.updateHeight(); // also sets decomposed to true
-     if (b)
-      parent.functions.add(and);
+     if (b) parent.functions.add(and);
     } else { // c depends on just one input j[0]; save this and stop search here
-     if (negatedIn[j[0]]) { // for not regarding negated inputs in
-                            // or-decomposition anymore
+     if (negatedIn[j[0]]) { // for not regarding negated inputs in or-decomposition anymore
       GraphFunction not = new GraphFunction(1, parent);
       not.in().set(0, (GraphNode) fktIn[j[0]]);
       Cube cn = new Cube(1);
       cn.setVar(0, ZERO);
       not.on.add(cn);
-      not.name = this.name + "_" + nameAdd++;
+      nameAdd = nextName(this.name + "_", nameAdd);
+      not.name = this.name + "_" + nameAdd;
       not.updateHeight(); // also sets decomposed to true
       andTree[i] = not;
       parent.functions.add(not);
@@ -127,7 +118,8 @@ public class GraphFunction extends BinFunction {
     co = new Cube(2);
     co.setVar(1, ONE);
     or.on.add(co);
-    or.name = this.name + "_" + nameAdd++;
+    nameAdd = nextName(this.name + "_", nameAdd);
+    or.name = this.name + "_" + nameAdd;
     // check, weather an equivalent or-function already exists
     boolean b = true;
     if (reUseExistingFunctions) {
@@ -143,8 +135,7 @@ public class GraphFunction extends BinFunction {
     andTree[j[0]] = or;
     andTree[j[1]] = null;
     or.updateHeight(); // also sets decomposed to true
-    if (b)
-     parent.functions.add(or);
+    if (b) parent.functions.add(or);
    } else { // function is completely decomposed
     // move all links from followers of this to the remaining two-input-or
     Iterator<GraphNode> it = this.out().iterator();
@@ -154,34 +145,55 @@ public class GraphFunction extends BinFunction {
     }
     // remove this from graph
     parent.functions.remove(this);
-    if (andTree[j[0]] instanceof GraphFunction)
-     ((GraphFunction) andTree[j[0]]).name = this.name;
+    if (andTree[j[0]] instanceof GraphFunction) ((GraphFunction) andTree[j[0]]).name = this.name;
     break;
    }
   } while (true);
  }
 
+ /**
+  * Increments nameAdd until the node nameBase+nameAdd doesn't exist in current model.
+  * @param nameBase
+  * @param nameAdd
+  * @return
+  * incremented nameAdd
+  */
+ private int nextName(String nameBase, int nameAdd) {
+  do {
+   nameAdd++;
+  } while (parent.getNodeByName(nameBase+nameAdd) != null);
+  return nameAdd;
+ }
+
+ /**
+  * Checks, weather an equivalent function to fkt (same inputs, same boolean function of this inputs) already exists
+  * @param fkt
+  * @return
+  * the equivalent function to fkt; null if not exists
+  */
  private GraphFunction equivalentFktExists(GraphFunction fkt) {
   Iterator<GraphNode> it = fkt.in().get(0).out().iterator();
   while (it.hasNext()) {
    GraphNode n = it.next();
-   if (n == fkt)
-    continue;
-   if (n instanceof GraphFunction && ((GraphFunction) n).isEquivalent(fkt))
-    return (GraphFunction) n;
+   if (n == fkt) continue;
+   if (n instanceof GraphFunction && ((GraphFunction) n).isEquivalent(fkt)) return (GraphFunction) n;
   }
   return null;
  }
 
+ /**
+  * @param in
+  * @return
+  * Returns the two nodes with the lowest height in the in-Array.
+  * All non-Function Nodes are expected to have height 0
+  */
  private int[] twoLowestHeights(Object[] in) {
   int h1 = Integer.MAX_VALUE, j1 = -1;
   int h2 = Integer.MAX_VALUE, j2 = -1;
   for (int j = 0; j < in.length; j++) {
-   if (in[j] == null)
-    continue;
+   if (in[j] == null) continue;
    int h = 0;
-   if (in[j] instanceof GraphFunction)
-    h = ((GraphFunction) in[j]).height();
+   if (in[j] instanceof GraphFunction) h = ((GraphFunction) in[j]).height();
    if (h < h1) {
     h2 = h1;
     j2 = j1;
@@ -198,27 +210,30 @@ public class GraphFunction extends BinFunction {
   return r;
  }
 
+ /**
+  * Sets the height of this function to the max(height of predecessors) + 1 and checks recursively the height of all
+  * successor-functions.
+  */
  public void updateHeight() {
   this.decomposed = this.in().size() <= 2;
   int height = 0;
   for (int i = 0; i < in().size(); i++) {
    int h = 0;
-   if (in().get(i) instanceof GraphFunction)
-    h = ((GraphFunction) in().get(i)).height;
-   if (h >= height)
-    height = h + 1;
+   if (in().get(i) instanceof GraphFunction) h = ((GraphFunction) in().get(i)).height;
+   if (h >= height) height = h + 1;
   }
-  if (this.height == height)
-   return;
+  if (this.height == height) return;
   this.height = height;
   Iterator<GraphNode> it = out().iterator();
   while (it.hasNext()) {
    GraphNode n = it.next();
-   if (n instanceof GraphFunction)
-    ((GraphFunction) n).updateHeight();
+   if (n instanceof GraphFunction) ((GraphFunction) n).updateHeight();
   }
  }
 
+ 
+ 
+ 
  public static class GraphFunctionCreator extends FunctionCreator {
   @Override
   public GraphFunction newFunction(int numInputs, Object parent) {
