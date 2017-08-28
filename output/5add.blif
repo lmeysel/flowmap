@@ -1,0 +1,14 @@
+.inputs a b c d e
+.outputs z
+
+.names c d z_2
+11 1
+
+.names a b z_1
+11 1
+
+.names e z_1 z_3
+11 1
+
+.names z_2 z_3 z
+11 1

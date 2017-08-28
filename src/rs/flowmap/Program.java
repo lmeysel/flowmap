@@ -30,6 +30,8 @@ public class Program {
 		System.out.println("decompose...");
 		Util.writeDOT("blubb1.txt", rootModel.iterateGraphNodes());
 		rootModel.decompose();
+		Util.writeDOT("blubb2.txt", rootModel.iterateGraphNodes());
+
 
 		System.out.println("label...");
 		Graph right = rootModel.getRightModel();

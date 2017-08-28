@@ -1,0 +1,8 @@
+.model 5add
+.inputs a b c d e
+.outputs z
+
+.names a b c d e z
+11111 1
+
+.end
