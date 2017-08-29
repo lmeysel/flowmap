@@ -53,6 +53,7 @@ In general, the graph implementation of the BLIF-structure is kept simple and sm
 
 
 \chapter{Decomposition}
+\label{decomposition}
 \begin{wrapfigure}{r}{0.41\textwidth}
 \centering
 \includegraphics[width=0.4\textwidth]{img/Decompose1.pdf}\\
@@ -63,6 +64,8 @@ The decomposition's task is to split each function, that has more than two input
 
 A problem can result from redundant functions. A decomposition like in \ref{fig:decompose1} can easily result from a BLIF, that describes each of the outputs in one boolean function. The composition with three inputs would result in four lookup tables, while the and-tree is redundant. When setting reUseExistingFunctions to true, the decomposition don't re-create functions with equal inputs and functionality. It can also be seen, that decomposition in a different order can create a structure, where the and-gates are non-redundant regarding the graph structure. An advanced concept of removing redundant structures was not task of this project and could be verry difficult. The reUseExistingFunctions only finds a few gates, that can be re-used.
 
+Negated inputs are put in the and-gates, but not in the or-gates. For a function, that uses a negated input directly in the or-structure like ab + c', a not-gate will be inserted at c.
+
 
 
 \include{labelling}
@@ -70,14 +73,31 @@ A problem can result from redundant functions. A decomposition like in \ref{fig:
 
 
 \chapter{Composition}
+\label{composition}
+\begin{wrapfigure}{r}{0.41\textwidth}
+\centering
+\includegraphics[width=0.4\textwidth]{img/Compose1.pdf}\\
+\caption{Composition principle}
+\label{fig:decompose1}
+\end{wrapfigure}
+The function GraphModel.composeFrunctionsFromGraph(cluster) computes the logic composition. Cluster.getStage() contains a vertex-list of all model outputs (which sould not but can be the OutputNodes or subcircuit-Links). If a vertex is linked with an OutputNode, the algorithm must branch to this OutputNode's input GraphFunction, otherwise keep the vertex' GraphNode as the composition target. If this is not a GraphFunction, it must be an input and will be returned without computing any composition. In case of a latch, the function cannot decide, weather it is an output or input. So it assumes it to be an input, and don't uses it's predecessor GraphFunction to compute any composition on it.
 
+cluster.getCluster().get(vertex) returns a list of the composition corner (the vertices, that will not be composed into the vertex, but have successors that will).
+
+The composeSet-function starts with the list of composition corner-nodes and the composition target node and returns the composed on-set of a new function, that represents the subtree between target and corner. It can be seen, that each composition-corner vertex will be a composition-target of a previous subtree or a graph-input (Model input, subcircuit output or latch).
+
+The function of a certain GraphNode can have negated inputs. According to the decomposition-phase (\ref{decomposition}), this negated inputs should only occur immediately behind the graph inputs. But principally there could be a two-input-function in the subtree, having an negated input of an other GraphFunction. Therefore, the composition algorithm is able to compute a complementation of such an input-set. The complementation algorithm was implemented as an addition to the Espresso-project.
+
+The composeVertex-function starts with one composition-target vertex, finds the corner and recursively processes the compositions of the corner's vertices before computing the composition of the given vertex. All successor-nodes of the composition-target, that are no functions, are linked to the composed function.
+
+When composeFrunctionsFromGraph finishes, there is still the original two-input-graph in the model and the new composed one in addition. The two-input-graph should endup with functions, that have no successor nodes. Such dead functions can be removed by calling cleanFunctions(). This function is called recursively until no more dead functions are found. After this, the two-input-tree should be completely removed from the model.
 
 
 
 \chapter{Conclusion}
-Niemand interessiert die Conclusion   :P
-\\
-The project is realized in about ???? lines of code.
+For testing, a 5-input-function is composed to 5-input-lookup-tables. This means, the result will contain only one function that must be equal to the original function except of the order of cubes and inputs. This is the case.
+
+It is probable, that latches will cause problems as described in \ref{composition}.
 
 
 

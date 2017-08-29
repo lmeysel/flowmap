@@ -18,7 +18,6 @@ import rs.flowmap.graph.Graph;
 import rs.flowmap.graph.Thingmabob;
 import rs.flowmap.graph.Vertex;
 import rs.flowmap.graph.VertexList;
-import rs.flowmap.graph.VertexSet;
 import rs.graphnode.GraphNode;
 import rs.graphnode.GraphNode.OutputNode;
 
@@ -130,6 +129,11 @@ public class GraphModel extends Model {
 	 * @param cluster
 	 * @return
 	 * The composed Node, already inserted into this Model's functions; can be null in some seldom cases (Virtual OutputNode is target of composition but has no sub-tree to be composed).
+     * @TODO
+     * Currently, this function don't receives the real composition-target vertices in all cases but the ones, that
+     * are linked with i.e. the OutputNodes. From there, the function must find the output GraphFunction of Vertex,
+     * which is not possible, if the Vertex is a latch, which can be an input as well. This function then will
+     * return this latch, assuming it to be an input and don't computing any composition.
 	 */
 	private GraphNode composeVertex (Vertex v, HashMap<Vertex, GraphNode> composedList, Thingmabob cluster) {
 	 // find the output GraphFunction of Vertex
@@ -140,24 +144,6 @@ public class GraphModel extends Model {
 	  composedList.put(v, v.getHorrible());
 	  return v.getHorrible();
 	 }
-	 /*// planlos einige Vorgängerknoten in v hineinziehen
-	 System.out.println("v hat "+v.getPredecessors().size()+" Vorgänger!");
-	 for (int k = v.getPredecessors().size()-1; k >= 0; k--) if (v.getPredecessors().get(k).getHorrible() instanceof GraphFunction) {
-	  Vertex rf = v.getPredecessors().remove(k);
-	  for (int i = 0; i < rf.getPredecessors().size(); i++) {
-	   boolean found = false;
-	   for (int j = 0; j < v.getPredecessors().size(); j++) if (v.getPredecessors().get(j) == rf.getPredecessors().get(i)) { found = true; break; }
-	   if (!found) v.getPredecessors().add(rf.getPredecessors().get(i));
-	  }
-	 }
-	 if (v.getPredecessors().get(0).getHorrible() instanceof GraphFunction) {
-      Vertex rf = v.getPredecessors().remove(0);
-      for (int i = 0; i < rf.getPredecessors().size(); i++) {
-       boolean found = false;
-       for (int j = 0; j < v.getPredecessors().size(); j++) if (v.getPredecessors().get(j) == rf.getPredecessors().get(i)) { found = true; break; }
-       if (!found) v.getPredecessors().add(rf.getPredecessors().get(i));
-      }
-     }*/
      // get and compose Vertex' inputs
 	 Object[] vin = cluster.getCluster().get(v).toArray();
 	 ArrayList<GraphNode> in = new ArrayList<GraphNode>(vin.length);
