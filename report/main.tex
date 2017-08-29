@@ -78,7 +78,7 @@ Negated inputs are put in the and-gates, but not in the or-gates. For a function
 \centering
 \includegraphics[width=0.4\textwidth]{img/Compose1.pdf}\\
 \caption{Composition principle}
-\label{fig:decompose1}
+\label{fig:compose1}
 \end{wrapfigure}
 The function GraphModel.composeFrunctionsFromGraph(cluster) computes the logic composition. Cluster.getStage() contains a vertex-list of all model outputs (which sould not but can be the OutputNodes or subcircuit-Links). If a vertex is linked with an OutputNode, the algorithm must branch to this OutputNode's input GraphFunction, otherwise keep the vertex' GraphNode as the composition target. If this is not a GraphFunction, it must be an input and will be returned without computing any composition. In case of a latch, the function cannot decide, weather it is an output or input. So it assumes it to be an input, and don't uses it's predecessor GraphFunction to compute any composition on it.
 
