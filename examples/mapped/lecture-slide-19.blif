@@ -1,0 +1,22 @@
+.inputs a b c d e f
+.outputs x
+
+.names c d b x_4
+101 1
+
+.names f c a x_8
+111 1
+
+.names e c d a x_11
+10-- 1
+--01 1
+-00- 1
+
+.names f c b x_9
+111 1
+
+.names x_4 x_8 x_11 x_9 x
+--1- 1
+---1 1
+1--- 1
+-1-- 1

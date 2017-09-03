@@ -1,15 +1,33 @@
 digraph G {
-n23 [label=<23 | o1>]
-n24 [label=<24 | i5>]
-n25 [label=<25 | i4>]
-n26 [label=<26 | i1>]
-n27 [label=<27 | i2>]
-n28 [label=<28 | i3>]
-{ rank=same; n24; n25; n26; n27; n28; }
-{ rank=same; n23; }
-n24 -> n23
+n20 [label=<20 | x>]
+n21 [label=<21 | x_4>]
+n22 [label=<22 | x_8>]
+n23 [label=<23 | x_11>]
+n24 [label=<24 | x_9>]
+n25 [label=<25 | c>]
+n26 [label=<26 | d>]
+n27 [label=<27 | b>]
+n28 [label=<28 | f>]
+n29 [label=<29 | a>]
+n30 [label=<30 | e>]
+{ rank=same; n25; n26; n27; n28; n29; n30; }
+{ rank=same; n21; n22; n23; n24; }
+{ rank=same; n20; }
+n21 -> n20
+n22 -> n20
+n23 -> n20
+n24 -> n20
+n25 -> n21
+n26 -> n21
+n27 -> n21
+n28 -> n22
+n25 -> n22
+n29 -> n22
+n30 -> n23
 n25 -> n23
 n26 -> n23
-n27 -> n23
-n28 -> n23
+n29 -> n23
+n28 -> n24
+n25 -> n24
+n27 -> n24
 }
