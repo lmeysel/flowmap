@@ -10,14 +10,15 @@ import java.util.Arrays;
  *
  */
 public class Cube {
- protected static final long TOTAL_DC = Long.parseUnsignedLong("FFFFFFFFFFFFFFFF", 16);
+ protected static final int TOTAL_DC = Integer.parseUnsignedInt("FFFFFFFF", 16);
  public final int width;
- protected final long[] cube;
+ protected final int[] cube;
  private int card = -1;
+ private static final int literalsPerWord = 16;
  
  public Cube(int width) {
   this.width = width;
-  cube = new long[(int)Math.ceil((width) / 32.0)];
+  cube = new int[(int)Math.ceil((width) / (literalsPerWord + 0.0))];
   Arrays.fill(cube, TOTAL_DC);
  }
 
@@ -49,23 +50,24 @@ public class Cube {
   * returns the n-th variable of cube
   */
  public int getVar(int n) {
-  return (int) ((cube[n / 32] >>> (n % 32)*2) & 3);
+  long l = ((cube[n / literalsPerWord] >>> (n % literalsPerWord)*2) & 3);
+  return (int) l;
  }
 
  /**
   * sets the n-th variable of cube to v
   */
  public void setVar(int n, int v) {
-  cube[n / 32] &= ~(3 << (n % 32)*2);
-  cube[n / 32] |= v << (n % 32)*2;
+  cube[n / literalsPerWord] &= ~(3 << (n % literalsPerWord)*2);
+  cube[n / literalsPerWord] |= v << (n % literalsPerWord)*2;
  }
  
  public void andVar(int n, int v) {
-  cube[n / 32] &= (v << (n % 32)*2) | ~(3 << (n % 32)*2);
+  cube[n / literalsPerWord] &= (v << (n % literalsPerWord)*2) | ~(3 << (n % literalsPerWord)*2);
  }
  
  public void orVar(int n, int v) {
-  cube[n / 32] |= (v << (n % 32)*2);
+  cube[n / literalsPerWord] |= (v << (n % literalsPerWord)*2);
  }
  
  /**
@@ -108,16 +110,16 @@ public class Cube {
  public int cardinality2 () {
   if (card != -1) return card;
   int r = 0;
-  for (int i = 0; i < width / 32; i++) {
+  for (int i = 0; i < width / literalsPerWord; i++) {
    long p = cube[i];
-   for (int j = 0; j < 32; j++) {
+   for (int j = 0; j < literalsPerWord; j++) {
     if ((p & BinFunction.DC) == BinFunction.INV) return -1;
     if ((p & BinFunction.DC) == BinFunction.DC) r++;
     p = p >>> 2;
    }
   }
   long p = cube[cube.length-1];
-  for (int j = 0; j < width % 32; j++) {
+  for (int j = 0; j < width % literalsPerWord; j++) {
    if ((p & BinFunction.DC) == BinFunction.INV) return -1;
    if ((p & BinFunction.DC) == BinFunction.DC) r++;
    p = p >>> 2;

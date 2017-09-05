@@ -139,8 +139,10 @@ public class GraphModel extends Model {
 	 // find the output GraphFunction of Vertex
 	 GraphFunction f;
 	 if (v.getHorrible() instanceof GraphFunction) f = (GraphFunction)v.getHorrible();
-	 else if (v.getHorrible() instanceof OutputNode) f = (GraphFunction)v.getHorrible().in().get(0);
-	 else {
+	 else if (v.getHorrible() instanceof OutputNode) {
+	  f = (GraphFunction)v.getHorrible().in().get(0);
+	  // System.out.println("Warning: Always provide the composeVertex-Function with the network's outbound function-nodes, not with the OutputNodes!");
+	 } else {
 	  composedList.put(v, v.getHorrible());
 	  return v.getHorrible();
 	 }
@@ -163,14 +165,14 @@ public class GraphModel extends Model {
 	 }
 	 // compose logic
 	 HashMap<GraphNode, Set> composedSets = new HashMap<GraphNode, Set>();
-	 for (int i = 0; i < mergeFkt.in().size(); i++) {
+	 for (int i = 0; i < mergeFkt.numInputs(); i++) {
 	  Set sin = new Set(mergeFkt.numInputs());
-	  Cube c = new Cube(sin.width()); // init with don't care
+	  Cube c = new Cube(mergeFkt.numInputs()); // init with don't care
 	  c.setVar(i, BinFunction.ONE);
 	  sin.add(c); // sin is now a set, that represents only the i-th input of mergeFkt
 	  GraphNode fp = ((Vertex)vin[i]).getHorrible();
 	  if (fp == f) return null; // Output function and it's virtual OutputNode are still in the composed tree together!
-	  composedSets.put(fp, sin); // link the uncomposed funtion (that is in the decomposed tree) with the related on-set
+	  composedSets.put(fp, sin); // link the uncomposed function (that is in the decomposed tree) with the related on-set
 	 }
      Set on = composeSet(f, mergeFkt.in().size(), composedSets);
      mergeFkt.on().addAll(on);

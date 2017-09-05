@@ -1,7 +1,5 @@
 package rs.flowmap.graph;
 
-import java.util.Comparator;
-
 import rs.graphnode.GraphNode;
 
 /**
