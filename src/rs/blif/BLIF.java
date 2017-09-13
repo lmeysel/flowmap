@@ -155,7 +155,17 @@ public class BLIF {
     } else {
      // BLIF data line
      if (currentFunctions == null) { log.severe("Parsing stopped at line "+n+" of file "+file.getName()+": No function definition was made before this data line!"); break LINEREADER; }
-     if (sp.length < 2) { log.severe("Parsing stopped at line "+n+" of file "+file.getName()+": No output specified!"); break LINEREADER; }
+     if (sp.length < 2) {
+      if (sp[0].equals("0") || sp[0].equals("1")) {
+       String backup = sp[0];
+       sp = new String[2];
+       sp[0] = "";
+       sp[1] = backup;
+      } else {
+       log.severe("Parsing stopped at line "+n+" of file "+file.getName()+": No output specified!");
+       break LINEREADER;
+      }
+     }
      if (sp[1].length() != currentFunctions.length) { log.severe("Parsing stopped at line "+n+" of file "+file.getName()+": Number of output variables noes not fit the declared number!"); break LINEREADER; }
      for (int i = 0; i < currentFunctions.length; i++) switch (sp[1].charAt(i)) { // create separate function for each output variable
       case '0' :

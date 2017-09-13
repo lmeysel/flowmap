@@ -18,6 +18,7 @@ import rs.flowmap.graph.Graph;
 import rs.flowmap.graph.Thingmabob;
 import rs.flowmap.graph.Vertex;
 import rs.flowmap.graph.VertexList;
+import rs.flowmap.graph.VertexSet;
 import rs.graphnode.GraphNode;
 import rs.graphnode.GraphNode.OutputNode;
 
@@ -147,7 +148,9 @@ public class GraphModel extends Model {
 	  return v.getHorrible();
 	 }
      // get and compose Vertex' inputs
-	 Object[] vin = cluster.getCluster().get(v).toArray();
+	 VertexSet vs = cluster.getCluster().get(v);
+	 Object[] vin = new Object[0];
+	 if (vs != null) vin = cluster.getCluster().get(v).toArray();
 	 ArrayList<GraphNode> in = new ArrayList<GraphNode>(vin.length);
 	 for (int i = 0; i < vin.length; i++) {
 	  GraphNode nn = composedList.get(vin[i]);

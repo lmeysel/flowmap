@@ -1,0 +1,55 @@
+# Benchmark "." written by ABC on Wed Sep 13 14:32:15 2017
+.model .
+.inputs x00 x01 x02 x03 x04 x05 x06 x07 x08 x09 x10 x11 x12 x13 x14 x15 x16 \
+ x17 x18 x19 x20 x21 x22 x23 x24 x25 x26 x27 x28 x29 x30 x31 x32 x33 x34
+.outputs z00 z01 z02 z03 z04 z05 z06 z07 z08 z09 z10 z11 z12 z13
+
+.names x00 x01 x02 x03 z00
+1111 1
+
+.names x01 x03 x04 x05 x07 x08 x15 x16 z01
+1110--11 0
+---0-0-- 0
+----0--- 0
+
+.names x05 z02
+0 1
+
+.names x05 x07 x10 x11 z03
+11-- 0
+-111 0
+
+.names x05 x07 x12 x13 x14 z04
+11--- 0
+-1111 0
+
+.names x17 x18 z05
+11 0
+
+.names x09 x19 x20 z06
+000 0
+
+.names x15 z07
+0 1
+
+.names x06 x21 z08
+11 0
+
+.names x22 x23 x25 x27 x28 x29 x30 x31 x32 x33 z09
+1001111111 0
+
+.names x22 x24 x26 x27 x28 x30 x31 x32 x33 x34 z10
+1111111111 0
+
+.names x01 x03 x04 x07 x08 x15 x16 z11
+111--11 0
+---0--- 0
+----0-- 0
+
+.names z12
+ 0
+ 
+.names z13
+ 0
+ 
+.end

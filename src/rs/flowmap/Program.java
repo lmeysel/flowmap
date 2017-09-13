@@ -37,7 +37,7 @@ public class Program {
 		System.out.println("decompose...");
 		rootModel.decompose();
 		if (visualizeProgress) Util.writeDOT("graphVis/2_deconmposed.txt", rootModel.iterateGraphNodes());
-
+		
 		System.out.println("label...");
 		Graph right = rootModel.getRightModel();
 		int nLut = Integer.parseInt(args[1]);

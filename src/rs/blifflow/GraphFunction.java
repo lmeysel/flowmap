@@ -145,10 +145,9 @@ public class GraphFunction extends BinFunction {
     if (b) parent.functions.add(or);
    } else { // function is completely decomposed
     GraphFunction t;
-    if (j[0] == -1) { // function is ZERO or ONE, just use one input to get a legal BLIF-Function!
-     t = new GraphFunction(1, parent);
-     t.in().set(0, this.in().get(0));
-     if (tautology) t.on.add(new Cube(1));
+    if (j[0] == -1) { // function is ZERO or ONE
+     t = new GraphFunction(0, parent);
+     if (tautology) t.on().add(new Cube(t.numInputs()));
      parent.functions.add(t);
     } else t = andTree[j[0]];
     // replace this with the decomposed end

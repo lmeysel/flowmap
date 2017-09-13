@@ -1,13 +1,19 @@
 .model decompose
 .inputs i1 i2 i3 i4 i5
-.outputs o1
+.outputs o1 o2
 
-.names i1 i2 i3 i4 i5 o1
--100- 1
--111- 1
-1010- 1
-1001- 1
-0-00- 1
-----0 1
+.names one
+1
+
+.names i1 i2 i3 i4 i5 one o1
+-100-1 1
+-111-1 1
+1010-1 1
+1001-1 1
+0-00-1 1
+----01 1
+
+.names one o2
+0 1
 
 .end
