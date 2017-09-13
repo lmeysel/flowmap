@@ -1,4 +1,4 @@
-.model asdfmodel
+.model decompose
 .inputs i1 i2 i3 i4 i5
 .outputs o1
 

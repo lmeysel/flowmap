@@ -1,0 +1,44 @@
+.model decompose
+.inputs i1 i2 i3 i4 i5
+.outputs o1
+
+.names i4 i2 i3 o1_3
+010 1
+
+.names i5 o1_13
+0 1
+
+.names o1_3 o1_13 o1_14
+-1 1
+1- 1
+
+.names i1 i2 o1_6
+10 1
+
+.names i4 i1 i3 o1_12
+000 1
+
+.names i4 i3 o1_9
+10 1
+
+.names o1_6 o1_12 o1_9 o1_16
+1-1 1
+-1- 1
+
+.names i1 i2 o1_6
+10 1
+
+.names i4 i2 i3 o1_5
+111 1
+
+.names i4 i3 o1_7
+01 1
+
+.names o1_6 o1_5 o1_7 o1_15
+-1- 1
+1-1 1
+
+.names o1_14 o1_16 o1_15 o1
+1-- 1
+--1 1
+-1- 1

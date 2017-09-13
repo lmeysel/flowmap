@@ -1,3 +1,4 @@
+.model lecture-slide-19
 .inputs a b c d e f
 .outputs x
 

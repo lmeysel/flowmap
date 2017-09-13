@@ -38,7 +38,7 @@ public class GraphFunction extends BinFunction {
   // be sure all previous functions were decomposed for dealing with the correct heights in the following
   for (int i = 0; i < in().size(); i++) if (in().get(i) instanceof GraphFunction) ((GraphFunction) in().get(i)).decompose();
   // search and-tree for decomposable functions
-  GraphNode[] andTree = new GraphNode[this.on.size()];
+  GraphFunction[] andTree = new GraphFunction[this.on.size()];
   cubeiterator: for (int i = 0; i < this.on.size(); i++) {
    Object[] fktIn = this.in().toArray();
    boolean[] negatedIn = new boolean[this.in().size()];
@@ -86,24 +86,27 @@ public class GraphFunction extends BinFunction {
      negatedIn[j[1]] = false;
      and.updateHeight(); // also sets decomposed to true
      if (b) parent.functions.add(and);
-    } else { // c depends on just one input j[0]; save this and stop search here
-     if (j[0] == -1) {
+    } else { // less than two inputs at c
+     if (j[0] == -1) { // function is a tautology (all literals don't care)!
       tautology = true;
-      break cubeiterator; // function is a tautology!
+      for (int k = 0; k < andTree.length; k++) andTree[k] = null;
+      break cubeiterator;
      }
-     if (negatedIn[j[0]]) { // for not regarding negated inputs in or-decomposition anymore
-      GraphFunction not = new GraphFunction(1, parent);
-      not.in().set(0, (GraphNode) fktIn[j[0]]);
+     // c depends on just one input j[0]; save this and stop search here
+     if (negatedIn[j[0]] || !(fktIn[j[0]] instanceof GraphFunction)) { // be sure, that andTree[i] will be a GraphFunction
+      GraphFunction singleIn = new GraphFunction(1, parent);
+      singleIn.in().set(0, (GraphNode) fktIn[j[0]]);
       Cube cn = new Cube(1);
-      cn.setVar(0, ZERO);
-      not.on.add(cn);
+      if (negatedIn[j[0]]) cn.setVar(0, ZERO);
+      else cn.setVar(0, ONE);
+      singleIn.on.add(cn);
       nameAdd = nextName(this.name + "_", nameAdd);
-      not.name = this.name + "_" + nameAdd;
-      not.updateHeight(); // also sets decomposed to true
-      andTree[i] = not;
-      parent.functions.add(not);
-     } else 
-      andTree[i] = (GraphNode) fktIn[j[0]];
+      singleIn.name = this.name + "_" + nameAdd;
+      singleIn.updateHeight(); // also sets decomposed to true
+      parent.functions.add(singleIn);
+      fktIn[j[0]] = singleIn;
+     }
+     andTree[i] = (GraphFunction)fktIn[j[0]];
      break;
     }
    } while (true);
@@ -142,15 +145,15 @@ public class GraphFunction extends BinFunction {
     if (b) parent.functions.add(or);
    } else { // function is completely decomposed
     GraphFunction t;
-    // move all links from followers of this to the remaining two-input-or and replace this by the two-input-or in the graph
-    if (j[0] != -1) t = (GraphFunction)andTree[j[0]];
-    else { // if function is ZERO or ONE, just use one input to get a legal BLIF-Function
+    if (j[0] == -1) { // function is ZERO or ONE, just use one input to get a legal BLIF-Function!
      t = new GraphFunction(1, parent);
      t.in().set(0, this.in().get(0));
      if (tautology) t.on.add(new Cube(1));
-     t.name = this.name;
-    }
-    parent.functions.replace(parent.functions.indexOf(this), t);
+     parent.functions.add(t);
+    } else t = andTree[j[0]];
+    // replace this with the decomposed end
+    t.name = this.name;
+    parent.functions.replace(this, t);
     break;
    }
   } while (true);

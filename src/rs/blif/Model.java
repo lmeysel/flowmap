@@ -91,7 +91,7 @@ public class Model {
 
  public void appendToFile(FileWriter fileWriter, boolean firstModel) throws IOException {
   //write opening of model
-  if (!firstModel) fileWriter.write(".model "+this.name+"\n");
+  /*if (!firstModel)*/ fileWriter.write(".model "+this.name+"\n");  // don't write .model, if this is the first model in the file
   if (this.inputs.size() != 0) {
    String s = ".inputs";
    for (int i = 0; i < this.inputs.size(); i++) s += " "+this.inputs.get(i).name();
@@ -236,15 +236,18 @@ public class Model {
    if (p != null && p != n) ((rs.graphnode.FreeableNode) p).free();
    return p;
   }
-  public void replace (int i, GraphNode n) {
-   rs.graphnode.GraphNode p = (rs.graphnode.GraphNode)super.set(i, n);
-   if (p == null) return;
-   Object[] out = p.out().toArray();
-   for (int j = 0; j < out.length; j++) {
-    int k = ((rs.graphnode.GraphNode)out[j]).in().indexOf(p);
-    if (k != -1) ((rs.graphnode.GraphNode)out[j]).in().set(k, (rs.graphnode.GraphNode)n);
-   }
-   p.free();
+  public void replace (rs.graphnode.GraphNode o, GraphNode n) {
+   if (o == n || o == null) return;
+   super.remove(n);
+   int i = super.indexOf(o);
+   if (i == -1) throw new RuntimeException("o is not element of current list!");
+   super.set(i, n);
+   Object[] out = o.out().toArray();
+   for (int j = 0; j < out.length; j++) do {
+    i = ((rs.graphnode.GraphNode)out[j]).in().indexOf(o);
+    if (i != -1) ((rs.graphnode.GraphNode)out[j]).in().set(i, (rs.graphnode.GraphNode)n);
+   } while (i != -1);
+   o.free();
   }
   @Override public void clear () {
    for (int i = 0; i < this.size(); i++) this.set(i, null);

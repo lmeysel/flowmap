@@ -23,34 +23,34 @@ public class Program {
         if (args.length == 1) {
          System.out.println("No lookup-tgable-size given!");
          return;
-     }
+        }
+        
+        boolean visualizeProgress = true;
 		
 		System.out.println("read blif...");
 		BLIF dat = new BLIF();
 		dat.modelType = new GraphModel.GraphModelCreator();
 		dat.functionType = new GraphFunction.GraphFunctionCreator();
 		GraphModel rootModel = (GraphModel)dat.addFromFile(args[0]);
+		if (visualizeProgress) Util.writeDOT("graphVis/1_input.txt", rootModel.iterateGraphNodes());
 
 		System.out.println("decompose...");
-		Util.writeDOT("blubb1.txt", rootModel.iterateGraphNodes());
 		rootModel.decompose();
-		Util.writeDOT("blubb2.txt", rootModel.iterateGraphNodes());
-
+		if (visualizeProgress) Util.writeDOT("graphVis/2_deconmposed.txt", rootModel.iterateGraphNodes());
 
 		System.out.println("label...");
 		Graph right = rootModel.getRightModel();
 		int nLut = Integer.parseInt(args[1]);
 		Thingmabob cluster = FlowLabeller.label(right, nLut);
-		right.writeDOT("graph-debug.txt");
+		if (visualizeProgress) right.writeDOT("graphVis/3_labeled.txt");
 		
 		System.out.println("compose...");
 		rootModel.composeFrunctionsFromGraph(cluster);
+        if (visualizeProgress) Util.writeDOT("graphVis/4_composed.txt", rootModel.iterateGraphNodes());
 		
 		System.out.println("clean..."); // remove unused nodes from decomposition
 		rootModel.cleanFunctions();
-
-		//rootModel.printNetwork();
-		//Util.writeDOT("blubb2.txt", rootModel.iterateGraphNodes());+
+        if (visualizeProgress) Util.writeDOT("graphVis/5_cleaned.txt", rootModel.iterateGraphNodes());
 
 		if (args.length >= 3) {
 		 System.out.println("save output...");
