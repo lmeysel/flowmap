@@ -1,4 +1,0 @@
-.inputs a
-.outputs b
-
-.subckt throughput1.blif a=a b=b

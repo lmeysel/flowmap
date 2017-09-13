@@ -20,6 +20,10 @@ public class Program {
 			System.out.println("No input data given!");
 			return;
 		}
+        if (args.length == 1) {
+         System.out.println("No lookup-tgable-size given!");
+         return;
+     }
 		
 		System.out.println("read blif...");
 		BLIF dat = new BLIF();
@@ -35,7 +39,8 @@ public class Program {
 
 		System.out.println("label...");
 		Graph right = rootModel.getRightModel();
-		Thingmabob cluster = FlowLabeller.label(right, 5);
+		int nLut = Integer.parseInt(args[1]);
+		Thingmabob cluster = FlowLabeller.label(right, nLut);
 		right.writeDOT("graph-debug.txt");
 		
 		System.out.println("compose...");
@@ -47,9 +52,9 @@ public class Program {
 		//rootModel.printNetwork();
 		//Util.writeDOT("blubb2.txt", rootModel.iterateGraphNodes());+
 
-		if (args.length >= 2) {
+		if (args.length >= 3) {
 		 System.out.println("save output...");
-		 dat.saveToFolder(args[1]);
+		 dat.saveToFolder(args[2]);
 		}
 	}
 }
